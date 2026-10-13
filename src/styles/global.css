@@ -1,0 +1,89 @@
+:root {
+  --mist: #e4eaec;
+  --mist-deep: #cfd9dd;
+  --ink: #18233a;
+  --ink-soft: #55627a;
+  --pine: #2e6b58;
+  --lamp: #e2b23c;
+  --surface: #f4f7f7;
+
+  --font-display: 'Familjen Grotesk', system-ui, sans-serif;
+  --font-body: 'Source Serif 4', Georgia, serif;
+
+  /* modular scale, ratio 1.25 */
+  --step--1: 0.85rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.33rem;
+  --step-2: 1.66rem;
+  --step-3: 2.07rem;
+  --step-4: clamp(2.2rem, 5vw, 3.6rem);
+  --step-5: clamp(2.8rem, 8vw, 5.6rem);
+
+  --gutter: clamp(1rem, 4vw, 3rem);
+  --measure: 66ch;
+  color-scheme: light;
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --mist: #121a2b;
+    --mist-deep: #1b2740;
+    --ink: #e6ecef;
+    --ink-soft: #9aa7bb;
+    --pine: #7cc2a8;
+    --lamp: #f0c75a;
+    --surface: #18223a;
+    color-scheme: dark;
+  }
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+
+html { -webkit-text-size-adjust: 100%; }
+
+body {
+  margin: 0;
+  background: var(--mist);
+  color: var(--ink);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.6;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  line-height: 1.1;
+  letter-spacing: -0.015em;
+  font-weight: 600;
+  margin: 0 0 0.5em;
+}
+
+a { color: inherit; text-decoration-thickness: 1px; text-underline-offset: 0.2em; }
+a:hover { color: var(--pine); }
+
+:focus-visible { outline: 3px solid var(--pine); outline-offset: 3px; border-radius: 2px; }
+
+img { max-width: 100%; height: auto; display: block; }
+
+.wrap { width: 100%; max-width: 72rem; margin-inline: auto; padding-inline: var(--gutter); }
+
+.prose { max-width: var(--measure); }
+.prose h2 { font-size: var(--step-2); margin-top: 2.2em; }
+.prose h3 { font-size: var(--step-1); margin-top: 1.8em; }
+.prose p, .prose ul, .prose ol { margin: 0 0 1.1em; }
+
+.skip-link {
+  position: absolute; left: var(--gutter); top: -4rem;
+  background: var(--ink); color: var(--mist);
+  padding: 0.6rem 1rem; z-index: 100; font-family: var(--font-display);
+}
+.skip-link:focus { top: 0.75rem; }
+
+.visually-hidden {
+  position: absolute; width: 1px; height: 1px; overflow: hidden;
+  clip: rect(0 0 0 0); white-space: nowrap;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; }
+}
