@@ -5,8 +5,8 @@ import ContactPanel from '../components/ContactPanel.astro';
 import Terminal from '../components/Terminal.astro';
 import { contactLinks } from '../data/contact';
 
-interface Props { title: string; description?: string }
-const { title, description = 'Matt Kam — frontend engineer with a design background.' } = Astro.props;
+interface Props { title: string; description?: string; showFooter?: boolean }
+const { title, description = 'Matt Kam — frontend engineer with a design background.', showFooter = true } = Astro.props;
 const fullTitle = title === 'Home' ? 'Matt Kam' : `${title} | Matt Kam`;
 ---
 <!doctype html>
@@ -29,17 +29,19 @@ const fullTitle = title === 'Home' ? 'Matt Kam' : `${title} | Matt Kam`;
     <main id="main">
       <slot />
     </main>
-    <footer class="site-footer wrap" id="contact">
-      <h2>Get in touch</h2>
-      <p>
-        {contactLinks.map((l, i) => (
-          <>
-            {i > 0 && <span aria-hidden="true"> / </span>}
-            <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{l.label}</a>
-          </>
-        ))}
-      </p>
-    </footer>
+    {showFooter && (
+      <footer class="site-footer wrap" id="contact">
+        <h2>Get in touch</h2>
+        <p>
+          {contactLinks.map((l, i) => (
+            <>
+              {i > 0 && <span aria-hidden="true"> / </span>}
+              <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{l.label}</a>
+            </>
+          ))}
+        </p>
+      </footer>
+    )}
     <ContactPanel />
     <Terminal />
   </body>

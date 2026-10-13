@@ -1,0 +1,158 @@
+---
+/**
+ * The depth view's camera. Four fixed layers sit behind the page; scrolling
+ * flies the camera forward through them. Each layer is a doorway: it grows,
+ * sinks and fades as the camera passes it, revealing the next section
+ * (front hills → Experience, middle hills → Work, back hills → About, and the
+ * sun fills the screen for the closing contact section).
+ *
+ * The cursor still nudges every layer by its depth, as on the classic hero.
+ * With reduced motion the scene stays still and sections simply show.
+ */
+---
+<div class="scene" aria-hidden="true" data-scene>
+  <div class="layer sun" data-layer="4" style="--depth: 0.5"></div>
+  <svg class="layer hill" data-layer="3" style="--depth: 1" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMax slice">
+    <path d="M0 380 C 220 300 380 330 560 290 S 900 250 1100 310 S 1360 300 1440 280 V600 H0Z" fill="var(--mist-deep)" />
+  </svg>
+  <svg class="layer hill" data-layer="2" style="--depth: 2" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMax slice">
+    <path d="M0 460 C 180 400 340 430 520 410 S 860 360 1040 420 S 1300 430 1440 400 V600 H0Z" fill="var(--pine)" opacity="0.55" />
+  </svg>
+  <svg class="layer hill" data-layer="1" style="--depth: 3" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMax slice">
+    <path d="M0 540 C 260 500 520 520 760 505 S 1200 490 1440 520 V600 H0Z" fill="var(--hill-front)" opacity="0.85" />
+  </svg>
+</div>
+
+<script>
+  const scene = document.querySelector<HTMLElement>('[data-scene]');
+  const layers = [...document.querySelectorAll<HTMLElement>('[data-layer]')].map((el) => ({
+    el, n: Number(el.dataset.layer), sun: el.classList.contains('sun'),
+  }));
+  const sections = [...document.querySelectorAll<HTMLElement>('[data-depth-section]')];
+  const reduce = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const canHover = matchMedia('(hover: hover) and (pointer: fine)').matches;
+
+  const clamp = (v: number, lo = 0, hi = 1) => Math.min(hi, Math.max(lo, v));
+  const smooth = (a: number, b: number, v: number) => { const t = clamp((v - a) / (b - a)); return t * t * (3 - 2 * t); };
+
+  if (scene && sections.length && !reduce) {
+    document.documentElement.classList.add('depth-live');
+
+    // ---- Scroll camera -------------------------------------------------------
+    // p runs 0 → sections.length - 1: p = k when section k's top reaches mid-screen.
+    let anchors: number[] = [];
+    const measure = () => {
+      const vh = innerHeight;
+      const bottom = document.documentElement.scrollHeight - vh;
+      const last = sections.length - 1;
+      anchors = sections.map((s, i) =>
+        i === 0 ? 0
+        // The final pass (into the sun) completes only at the very bottom, as the closing text settles.
+        : i === last ? Math.min(s.offsetTop, bottom)
+        : Math.max(0, s.offsetTop - vh * 0.5));
+    };
+    const progress = () => {
+      const y = scrollY;
+      for (let k = 0; k < anchors.length - 1; k++) {
+        if (y < anchors[k + 1]) return k + clamp((y - anchors[k]) / (anchors[k + 1] - anchors[k] || 1));
+      }
+      return anchors.length - 1;
+    };
+
+    function frame() {
+      const p = progress();
+      const vh = innerHeight;
+      const vw = innerWidth;
+      for (const { el, n, sun } of layers) {
+        const before = Math.min(p, n - 1); // creeping closer while earlier layers pass
+        const t = clamp(p - (n - 1)); // this layer's own pass
+        const e = t * t; // accelerate as the camera reaches it
+        if (sun) {
+          // Grow toward the middle of the screen until it fills it.
+          const r = el.offsetWidth / 2;
+          const cx = el.offsetLeft + r;
+          const cy = el.offsetTop + r;
+          const fill = Math.hypot(vw, vh) / (r * 2) * 1.15;
+          const s = (1 + 0.05 * before) * (1 + (fill - 1) * e);
+          el.style.setProperty('--s', s.toFixed(4));
+          el.style.setProperty('--tx', `${((vw / 2 - cx) * smooth(0, 0.8, t)).toFixed(1)}px`);
+          el.style.setProperty('--ty', `${((vh / 2 - cy) * smooth(0, 0.8, t)).toFixed(1)}px`);
+        } else {
+          const s = (1 + 0.06 * before) * (1 + 1.5 * e);
+          el.style.setProperty('--s', s.toFixed(4));
+          el.style.setProperty('--ty', `${(e * vh * 0.6).toFixed(1)}px`);
+          el.style.setProperty('--o', (1 - smooth(0.55, 1, t)).toFixed(3));
+        }
+      }
+      // Sections: fade in as they rise into view, fade out as they leave the top.
+      for (const s of sections) {
+        const r = s.getBoundingClientRect();
+        // Fade length as a fraction of the screen; sections with longer transitions set data-fade.
+        const fade = Number(s.dataset.fade ?? 0.35);
+        const fadeIn = clamp((vh * 0.95 - r.top) / (vh * fade));
+        const fadeOut = clamp((r.bottom - vh * 0.05) / (vh * fade));
+        const o = Math.min(fadeIn, fadeOut);
+        s.style.opacity = o.toFixed(3);
+        s.style.transform = `translate3d(0, ${((1 - fadeIn) * 32).toFixed(1)}px, 0)`;
+        s.style.visibility = o < 0.01 ? 'hidden' : '';
+      }
+    }
+
+    let queued = false;
+    const request = () => { if (!queued) { queued = true; requestAnimationFrame(() => { queued = false; frame(); }); } };
+    measure();
+    frame();
+    addEventListener('scroll', request, { passive: true });
+    addEventListener('resize', () => { measure(); request(); });
+    // Fonts and islands can change section heights after load.
+    addEventListener('load', () => { measure(); request(); });
+    new ResizeObserver(() => { measure(); request(); }).observe(document.body);
+
+    // ---- Pointer drift (same feel as the classic hero) -------------------------
+    if (canHover) {
+      let target = { x: 0, y: 0 };
+      const pos = { x: 0, y: 0 };
+      let inside = false;
+      let raf = 0;
+      let last = 0;
+      const tick = (now: number) => {
+        const dt = Math.min(64, now - (last || now));
+        last = now;
+        const k = 1 - Math.exp(-dt / (inside ? 140 : 900));
+        pos.x += (target.x - pos.x) * k;
+        pos.y += (target.y - pos.y) * k;
+        scene.style.setProperty('--cx', pos.x.toFixed(4));
+        scene.style.setProperty('--cy', pos.y.toFixed(4));
+        if (Math.abs(target.x - pos.x) + Math.abs(target.y - pos.y) > 0.001) raf = requestAnimationFrame(tick);
+        else { raf = 0; last = 0; }
+      };
+      const start = () => { if (!raf) raf = requestAnimationFrame(tick); };
+      addEventListener('pointermove', (e) => {
+        target = { x: (e.clientX / innerWidth - 0.5) * 2, y: (e.clientY / innerHeight - 0.5) * 2 };
+        inside = true;
+        start();
+      });
+      document.documentElement.addEventListener('pointerleave', () => { target = { x: 0, y: 0 }; inside = false; start(); });
+    }
+  }
+</script>
+
+<style>
+  .scene { position: fixed; inset: -40px; z-index: 0; overflow: hidden; pointer-events: none; --cx: 0; --cy: 0; }
+  .layer {
+    position: absolute; will-change: transform, opacity;
+    opacity: var(--o, 1);
+    transform:
+      translate3d(
+        calc(var(--tx, 0px) + var(--cx) * var(--depth) * 10px),
+        calc(var(--ty, 0px) + var(--cy) * var(--depth) * 5px),
+        0)
+      scale(var(--s, 1));
+  }
+  .hill { inset: 0; width: 100%; height: 100%; transform-origin: 50% 100%; }
+  .sun {
+    width: clamp(110px, 13vw, 190px); aspect-ratio: 1; border-radius: 50%;
+    right: calc(15vw + 40px); top: calc(16vh + 40px);
+    background: var(--lamp); opacity: 0.9; transform-origin: 50% 50%;
+  }
+</style>
