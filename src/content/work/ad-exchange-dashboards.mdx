@@ -1,6 +1,6 @@
 ---
 title: Ad performance dashboards
-summary: Dashboards that showed account managers where a client's sales came from for the money they put in.
+summary: Dashboards that showed affiliate managers which affiliates and traffic sources were converting, and which were worth more traffic.
 company: Ad Exchange Group
 role: Front End to Senior Front End Developer
 years: 2014–2019
@@ -9,31 +9,33 @@ order: 5
 recreation: true
 ---
 
-import AdDashboard from '../../components/demos/AdDashboard.tsx';
+import AdDashboard from "../../components/demos/AdDashboard.tsx";
 
 ## Try it
 
-I built the PHP sales funnels; the data they sent back fed dashboards account managers used
-to answer one question for each client: for the money they put in, where did the sales come
-from? Pick a date range or traffic source, then open a funnel to see where people drop off
-and which sources pay for themselves.
+I built the PHP sales funnels, and the data they sent back fed the dashboards affiliate managers
+used to answer one question for each affiliate: for the money going in, where were the sales
+coming from? Pick a date range or traffic source, then open an affiliate to see where people
+drop off and which sources pay for themselves.
 
-This is a reconstruction from memory with invented clients and numbers. It shows the kind of
+This is a reconstruction from memory with invented affiliates and numbers. It shows the kind of
 view the team relied on, not the original screens.
 
 <AdDashboard client:visible />
 
 ## The problem
 
-{/* TODO (interview) */}
-Placeholder.
+Affiliate managers needed to track each affiliate's conversions so they could send more
+traffic to the most profitable sources and fulfill orders. The bottleneck was the data itself:
+it arrived raw and didn't give them enough insight to make those decisions.
 
 ## What I did
 
-{/* TODO (interview) */}
-Placeholder.
+I talked with the managers to understand what they needed to know, then worked out how to
+show it. Quick-glance metrics came first, backed by deeper analytics that showed trends over
+time and put the numbers each manager cared about front and center.
 
 ## Result
 
-{/* TODO (interview) */}
-Placeholder.
+Managers could spend more of their time finding new affiliates in different verticals, and
+they could share key insights with the affiliates already in the network.
