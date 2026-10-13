@@ -3,13 +3,20 @@ title: Cancellation prevention
 summary: A branching flow that meets customers at the moment they try to cancel, with an offer that fits their reason.
 company: Recharge
 role: Frontend engineer, rewards & loyalty
-years: "TODO"
+years: "2022–2026"
 stack: [Vue, React, TypeScript]
 order: 2
 recreation: true
 ---
 
-{/* Live demo comes next: reason, then offer, then save or confirm. */}
+import CancellationFlow from '../../components/demos/CancellationFlow.tsx';
+
+## Try it
+
+Start a cancellation, pick a reason, and see the offer that matches it. Switch the shopper's
+country to check prices and dates in their currency and format.
+
+<CancellationFlow client:idle />
 
 ## The problem
 

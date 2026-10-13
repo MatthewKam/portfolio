@@ -1,0 +1,72 @@
+---
+/**
+ * Contact panel that slides in from the right when the nav's Contact link is
+ * used. Without JS the link still jumps to the footer (#contact).
+ */
+import { contactLinks } from '../data/contact';
+---
+<dialog class="contact-panel" id="contact-panel" aria-labelledby="contact-panel-title">
+  <div class="panel-inner">
+    <div class="panel-head">
+      <h2 id="contact-panel-title">Get in touch</h2>
+      <button type="button" class="close" data-contact-close aria-label="Close">×</button>
+    </div>
+    <p class="lede">I'm looking for my next frontend role. The quickest way to reach me is LinkedIn.</p>
+    <ul>
+      {contactLinks.map((l) => (
+        <li>
+          <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>
+            <span>{l.label}</span>
+            <span aria-hidden="true">{l.external ? '↗' : '↓'}</span>
+          </a>
+        </li>
+      ))}
+    </ul>
+  </div>
+</dialog>
+
+<script>
+  const panel = document.querySelector<HTMLDialogElement>('#contact-panel');
+  document.querySelectorAll<HTMLAnchorElement>('a[href$="#contact"]').forEach((link) => {
+    link.addEventListener('click', (e) => {
+      if (!panel || e.metaKey || e.ctrlKey || e.shiftKey || e.button !== 0) return;
+      e.preventDefault();
+      panel.showModal();
+    });
+  });
+  panel?.querySelector('[data-contact-close]')?.addEventListener('click', () => panel.close());
+  // Clicking the backdrop (the dialog itself, outside .panel-inner) closes it.
+  panel?.addEventListener('click', (e) => { if (e.target === panel) panel.close(); });
+</script>
+
+<style>
+  .contact-panel {
+    margin: 0 0 0 auto; height: 100dvh; max-height: none; width: min(26rem, 100vw);
+    padding: 0; border: 0; border-left: 1px solid var(--mist-deep);
+    background: var(--mist); color: var(--ink);
+    transform: translateX(100%);
+    transition: transform 250ms ease, overlay 250ms allow-discrete, display 250ms allow-discrete;
+  }
+  .contact-panel[open] { transform: translateX(0); }
+  @starting-style { .contact-panel[open] { transform: translateX(100%); } }
+  .contact-panel::backdrop { background: rgb(10 15 25 / 0.45); }
+
+  .panel-inner { padding: 1.5rem clamp(1.25rem, 4vw, 2rem); }
+  .panel-head { display: flex; justify-content: space-between; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+  .panel-head h2 { font-size: var(--step-2); margin: 0; }
+  .close {
+    font: inherit; font-size: 1.6rem; line-height: 1; cursor: pointer;
+    width: 44px; height: 44px; border-radius: 50%; border: 1px solid var(--mist-deep);
+    background: transparent; color: var(--ink);
+  }
+  .close:hover { border-color: var(--ink); }
+  .lede { color: var(--ink-soft); margin: 0 0 1.5rem; }
+  ul { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--mist-deep); }
+  li { border-bottom: 1px solid var(--mist-deep); }
+  li a {
+    display: flex; justify-content: space-between; align-items: center; gap: 1rem;
+    padding: 1.1rem 0.25rem; min-height: 44px; text-decoration: none;
+    font-family: var(--font-display); font-weight: 600; font-size: var(--step-1);
+  }
+  li a:hover { color: var(--pine); }
+</style>

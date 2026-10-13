@@ -1,0 +1,55 @@
+/* Series colors validated (dataviz validator) for CVD separation and contrast on each surface. */
+.ch { --series-1: #2a6fb8; --series-2: #cc5f24; margin: 0; min-width: 0; }
+@media (prefers-color-scheme: dark) {
+  .ch { --series-1: #3b8fd4; --series-2: #d4692b; }
+}
+.ch figcaption { font-weight: 600; margin-bottom: 0.4rem; }
+
+.ch-legend { display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; list-style: none; padding: 0; margin: 0 0 0.4rem; font-size: var(--step--1); color: var(--ink-soft); }
+.ch-legend li { display: flex; align-items: center; gap: 0.4rem; }
+.ch-key { display: inline-block; width: 0.75rem; height: 0.75rem; border-radius: 3px; margin-right: 0.35rem; vertical-align: -0.05em; }
+.ch-legend .ch-key { margin-right: 0; }
+.ch-key.ch-s1 { background: var(--series-1); }
+.ch-key.ch-s2 { background: var(--series-2); }
+
+.ch-wrap { position: relative; }
+.ch svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.ch svg:focus-visible { outline: 3px solid var(--pine); outline-offset: 4px; border-radius: 4px; }
+.ch-grid { stroke: var(--mist-deep); stroke-width: 1; }
+.ch-base { stroke: var(--ink-soft); stroke-width: 1; }
+.ch-tick { fill: var(--ink-soft); font-size: 11px; font-family: var(--font-display); }
+.ch-cross { stroke: var(--ink-soft); stroke-width: 1; stroke-dasharray: 3 3; }
+
+.ch-line { fill: none; stroke-width: 2; stroke-linejoin: round; stroke-linecap: round; }
+.ch-line.ch-s1 { stroke: var(--series-1); }
+.ch-line.ch-s2 { stroke: var(--series-2); }
+.ch-dot { stroke: var(--surface); stroke-width: 2; }
+.ch-dot.ch-s1 { fill: var(--series-1); }
+.ch-dot.ch-s2 { fill: var(--series-2); }
+
+.ch-bar.ch-s1 { fill: var(--series-1); }
+.ch-bar.ch-s2 { fill: var(--series-2); }
+.ch svg g { transition: opacity 120ms ease; }
+.ch-dim { opacity: 0.4; }
+
+.ch-tip {
+  position: absolute; transform: translate(-50%, calc(-100% - 12px)); pointer-events: none; z-index: 2;
+  display: grid; gap: 0.15rem; white-space: nowrap;
+  background: var(--ink); color: var(--mist); border-radius: 8px; padding: 0.45rem 0.7rem;
+  font-size: 0.78rem; line-height: 1.35;
+}
+.ch-tip .ch-key { width: 0.6rem; height: 0.6rem; }
+
+.ch-share { list-style: none; padding: 0; margin: 0.4rem 0 0; display: grid; gap: 0.55rem; }
+.ch-share li { display: grid; grid-template-columns: minmax(7rem, 0.9fr) minmax(0, 1.4fr) auto; gap: 0.75rem; align-items: center; font-size: var(--step--1); }
+.ch-share-track { height: 0.9rem; }
+.ch-share-fill { display: block; height: 100%; border-radius: 0 4px 4px 0; background: var(--series-1); min-width: 2px; }
+.ch-share-val { font-weight: 600; font-variant-numeric: tabular-nums; min-width: 6.5rem; }
+.ch-share-val small { font-weight: 400; color: var(--ink-soft); }
+
+.ch-table { margin-top: 0.5rem; font-size: var(--step--1); }
+.ch-table summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+.ch-table-wrap { overflow-x: auto; }
+.ch-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.ch-table th, .ch-table td { text-align: right; padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--mist-deep); white-space: nowrap; }
+.ch-table th:first-child { text-align: left; }

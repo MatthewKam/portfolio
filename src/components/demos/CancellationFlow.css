@@ -1,0 +1,36 @@
+.cf { display: grid; gap: 2rem; }
+@media (min-width: 52rem) {
+  .cf { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
+}
+.cf h4 { font-size: var(--step-1); margin: 0 0 0.6rem; }
+.cf-step { border: 0; margin: 0; padding: 0; min-width: 0; }
+.cf-step legend { padding: 0; }
+.cf-step p { font-family: var(--font-body); margin: 0 0 1rem; }
+
+.cf-sub { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.9rem 1.5rem; margin: 0 0 1.25rem; }
+.cf-sub dt { font-size: var(--step--1); color: #7a5b45; }
+.cf-sub dd { margin: 0.15rem 0 0; font-weight: 600; }
+.cf-sub small { font-weight: 500; color: #7a5b45; }
+
+.cf-reasons { display: grid; gap: 0.5rem; margin: 0.5rem 0 1.25rem; }
+.cf-reasons label {
+  display: flex; align-items: center; gap: 0.7rem; min-height: 48px; padding: 0.5rem 0.9rem;
+  border: 1px solid #e3d2b8; border-radius: 10px; cursor: pointer; background: #fbf4ea;
+}
+.cf-reasons label.is-on { border-color: #3b2a20; box-shadow: 0 0 0 1px #3b2a20 inset; }
+.cf-reasons input { accent-color: #3b2a20; width: 1.1rem; height: 1.1rem; }
+
+.cf-eyebrow { font-family: var(--font-display) !important; font-size: var(--step--1); color: #7a5b45; margin-bottom: 0.4rem !important; }
+.cf-actions { display: flex; flex-wrap: wrap; gap: 0.5rem 1rem; align-items: center; }
+.cf-swap, .cf-note { display: grid; gap: 0.35rem; margin: 0 0 1.25rem; font-size: var(--step--1); color: #7a5b45; }
+.cf-portal select, .cf-portal textarea { background: #fbf4ea; color: #2a1d15; border-color: #c9b293; }
+
+.cf-side-title { font-size: var(--step-0); margin: 1.5rem 0 0.5rem; }
+.cf-rules { list-style: none; padding: 0; margin: 0; font-size: var(--step--1); }
+.cf-rules li {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 1rem;
+  padding: 0.55rem 0.5rem; border-bottom: 1px solid var(--mist-deep); border-radius: 6px;
+  transition: background-color 200ms ease;
+}
+.cf-rules li > span:last-child { color: var(--ink-soft); }
+.cf-rules li.is-on { background: color-mix(in srgb, var(--lamp) 22%, transparent); }

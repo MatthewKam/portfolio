@@ -1,17 +1,22 @@
-import { useMemo, useState } from 'react';
+import { useState } from 'react';
+import { fakeApi } from './shared';
+import CustomerPortal from './CustomerPortal';
+import PunchCardView from './PunchCardView';
+import { STEPS, rewardText, useDesign } from './punchCardDesign';
 import './PunchCard.css';
 
 /**
  * Punch card demo for Loam Coffee Co. (fictional brand, fake data).
  * Rules modeled here:
- *  - Each paid order earns one punch. 8 punches unlock a free bag.
+ *  - Each paid order earns one punch. A full card (8) unlocks the reward to redeem.
  *  - Punches beyond 8 carry over to the next card.
  *  - Refunding an order removes its punch, unless that punch was
  *    already spent on a redeemed reward (we never claw back a reward).
  *  - Every action goes through a fake API with latency and optional failure.
+ * The card's look comes from the shared design, so the designer below restyles it.
  */
 
-const CARD_SIZE = 8;
+const CARD_SIZE = STEPS;
 
 type Order = { id: number; item: string; date: string; refunded: boolean };
 
@@ -23,14 +28,8 @@ const SEED: Order[] = [
 
 const ITEMS = ['Ridgeline blend, 12 oz', 'Night Owl decaf, 12 oz', 'Harbor espresso, 2 lb', 'Field notes sampler'];
 
-function fakeApi<T>(result: T, fail: boolean): Promise<T> {
-  const latency = 350 + Math.random() * 450;
-  return new Promise((resolve, reject) =>
-    setTimeout(() => (fail ? reject(new Error('The server did not respond.')) : resolve(result)), latency),
-  );
-}
-
 export default function PunchCard() {
+  const design = useDesign();
   const [orders, setOrders] = useState<Order[]>(SEED);
   const [redeemed, setRedeemed] = useState(0);
   const [pending, setPending] = useState<string | null>(null);
@@ -47,7 +46,6 @@ export default function PunchCard() {
   const onCard = rewardReady ? CARD_SIZE : balance;
   const carryOver = Math.max(0, balance - CARD_SIZE);
 
-  const punches = useMemo(() => Array.from({ length: CARD_SIZE }, (_, i) => i < onCard), [onCard]);
 
   async function run(label: string, action: () => void, success: string) {
     setPending(label);
@@ -98,7 +96,7 @@ export default function PunchCard() {
   }
 
   function redeem() {
-    run('Redeem', () => setRedeemed((r) => r + 1), 'Free bag redeemed. A new card starts now.');
+    run('Redeem', () => setRedeemed((r) => r + 1), `${rewardText(design, STEPS)} redeemed. A new card starts now.`);
   }
 
   function reset() {
@@ -110,37 +108,18 @@ export default function PunchCard() {
     setNextId(1080);
   }
 
-  const shownOnCard = onCard;
-
   return (
     <div className="pc">
-      <div className="pc-card" aria-busy={pending !== null}>
-        <div className="pc-head">
-          <div>
-            <p className="pc-brand">Loam Coffee Co.</p>
-            <p className="pc-goal">Eight bags, then one on us</p>
-          </div>
-          <p className="pc-count" aria-live="polite">
-            {shownOnCard} of {CARD_SIZE}
-          </p>
-        </div>
-
-        <ol className="pc-punches" aria-label={`${shownOnCard} of ${CARD_SIZE} punches`}>
-          {punches.map((filled, i) => (
-            <li key={i} className={filled ? 'is-filled' : ''}>
-              <span className="visually-hidden">{filled ? 'Punched' : 'Empty'}</span>
-            </li>
-          ))}
-        </ol>
-
-        {carryOver > 0 && <p className="pc-carry">{carryOver} extra {carryOver === 1 ? 'punch carries' : 'punches carry'} over to your next card.</p>}
-
-        <div className="pc-actions">
-          <button type="button" onClick={redeem} disabled={!rewardReady || pending !== null} className="pc-primary">
-            {pending === 'Redeem' ? 'Redeeming…' : rewardReady ? 'Redeem free bag' : `${CARD_SIZE - shownOnCard} more to go`}
-          </button>
-        </div>
-      </div>
+      <CustomerPortal>
+        <PunchCardView design={design} reached={onCard} busy={pending !== null}>
+          {carryOver > 0 && <p className="pc-carry">{carryOver} extra {carryOver === 1 ? 'punch carries' : 'punches carry'} over to your next card.</p>}
+          {rewardReady && (
+            <button type="button" onClick={redeem} disabled={pending !== null} className="pc-primary">
+              {pending === 'Redeem' ? 'Redeeming…' : `Redeem ${rewardText(design, STEPS).toLowerCase()}`}
+            </button>
+          )}
+        </PunchCardView>
+      </CustomerPortal>
 
       <div className="pc-side">
         <div className="pc-controls" role="group" aria-label="Demo controls">

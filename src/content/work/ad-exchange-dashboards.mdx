@@ -1,14 +1,27 @@
 ---
 title: Ad performance dashboards
-summary: React dashboards for reading campaign performance at a glance.
+summary: Dashboards that showed account managers where a client's sales came from for the money they put in.
 company: Ad Exchange Group
 role: Front End to Senior Front End Developer
 years: 2014–2019
 stack: [React]
-order: 3
+order: 5
+recreation: true
 ---
 
-{/* TODO: screenshots or short video loops; rebuild with fake data if originals are unavailable. */}
+import AdDashboard from '../../components/demos/AdDashboard.tsx';
+
+## Try it
+
+I built the PHP sales funnels; the data they sent back fed dashboards account managers used
+to answer one question for each client: for the money they put in, where did the sales come
+from? Pick a date range or traffic source, then open a funnel to see where people drop off
+and which sources pay for themselves.
+
+This is a reconstruction from memory with invented clients and numbers. It shows the kind of
+view the team relied on, not the original screens.
+
+<AdDashboard client:visible />
 
 ## The problem
 

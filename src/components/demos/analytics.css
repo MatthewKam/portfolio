@@ -1,0 +1,23 @@
+/* Shared layout for the merchant analytics demos. */
+.an-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; margin-bottom: 1rem; }
+.an-head .demo-frame-label { margin: 0; }
+.an-seg { display: flex; }
+.demo .an-seg button { border-radius: 0; min-height: 40px; padding: 0.3rem 0.8rem; font-size: var(--step--1); border-color: var(--mist-deep); }
+.demo .an-seg button:first-child { border-radius: 999px 0 0 999px; }
+.demo .an-seg button:last-child { border-radius: 0 999px 999px 0; }
+.demo .an-seg button + button { margin-left: -1px; }
+.demo .an-seg button[aria-pressed='true'] { background: var(--ink); color: var(--mist); border-color: var(--ink); }
+
+.an-tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(9.5rem, 1fr)); gap: 0.75rem; margin: 0 0 1.5rem; }
+.an-tiles > div { background: var(--mist); border-radius: 10px; padding: 0.8rem 1rem; }
+.an-tiles dt { font-size: var(--step--1); color: var(--ink-soft); }
+.an-tiles dd { margin: 0.15rem 0 0; font-size: var(--step-2); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
+.an-tiles small { display: block; margin-top: 0.2rem; font-size: 0.75rem; color: var(--ink-soft); font-weight: 400; }
+
+.an-section { padding-top: 1.25rem; margin-top: 1.25rem; border-top: 1px solid var(--mist-deep); }
+.an-section-head { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: 0.5rem 1rem; margin-bottom: 0.5rem; }
+.an-section-head h4 { font-size: var(--step-1); margin: 0; }
+.an-note { margin: 0 0 0.75rem; font-size: var(--step--1); color: var(--ink-soft); }
+.an-grid { display: grid; gap: 1.75rem; }
+@media (min-width: 52rem) { .an-grid { grid-template-columns: minmax(0, 1.3fr) minmax(0, 1fr); } }
+.an-behavior { margin: 1.25rem 0 0; }

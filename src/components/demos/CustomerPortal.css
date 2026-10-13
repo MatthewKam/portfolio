@@ -1,0 +1,106 @@
+/* Customer account page chrome around a demo. */
+.pcp {
+	width: 100%;
+	background: #fbf4ea;
+	color: #2a1d15;
+	border: 1px solid #e3d2b8;
+	border-radius: 14px;
+	overflow: hidden;
+	container: pcp / inline-size;
+}
+.pcp-top {
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	padding: 0.8rem 1.1rem;
+	background: #3b2a20;
+	color: #f6ead8;
+}
+.pcp-brand {
+	font-weight: 700;
+}
+.pcp-account {
+	width: 1.9rem;
+	height: 1.9rem;
+	border-radius: 50%;
+	display: grid;
+	place-items: center;
+	background: #e2b23c;
+	color: #2a1d15;
+	font-weight: 700;
+	font-size: 0.85rem;
+}
+.pcp-nav {
+	display: flex;
+	gap: 1.1rem;
+	padding: 0 1.1rem;
+	border-bottom: 1px solid #e3d2b8;
+	overflow-x: auto;
+	font-size: var(--step--1);
+}
+.pcp-nav span {
+	padding: 0.7rem 0;
+	color: #7a5b45;
+	white-space: nowrap;
+	border-bottom: 2px solid transparent;
+}
+.pcp-nav span.is-on {
+	color: #2a1d15;
+	font-weight: 600;
+	border-bottom-color: #3b2a20;
+}
+.pcp-hello {
+	margin: 1.1rem 1.1rem 0.8rem;
+	font-size: var(--step-1);
+	font-weight: 600;
+}
+p.pcp-hello {
+	padding: 0 1.1rem;
+	margin: 1.1rem 0;
+}
+.pcp-cols {
+	display: grid;
+	gap: 0.9rem;
+	padding: 0 1.1rem 1.1rem;
+	align-items: start;
+}
+.pcp-side {
+	display: grid;
+	gap: 0.9rem;
+	grid-template-columns: repeat(auto-fit, minmax(12rem, 1fr));
+}
+@container pcp (min-width: 46rem) {
+	.pcp-cols {
+		grid-template-columns: minmax(0, 1.7fr) minmax(0, 1fr);
+	}
+	.pcp-side {
+		grid-template-columns: 1fr;
+	}
+}
+.pcp-box {
+	background: #f6ead8;
+	border: 1px solid #e3d2b8;
+	border-radius: 12px;
+	padding: 0.9rem 1rem;
+	font-size: var(--step--1);
+}
+.pcp-box p {
+	margin: 0 0 0.25rem;
+}
+.pcp-label {
+	color: #7a5b45;
+	text-transform: uppercase;
+	letter-spacing: 0.06em;
+	font-size: 0.7rem;
+}
+.pcp-big {
+	font-size: var(--step-1);
+	font-weight: 700;
+}
+.pcp-link {
+	display: inline-block;
+	margin-top: 0.35rem;
+	font-weight: 600;
+	text-decoration: underline;
+	text-underline-offset: 0.2em;
+}

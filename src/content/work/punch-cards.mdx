@@ -3,19 +3,29 @@ title: Punch cards
 summary: A loyalty program for subscription merchants, scoped to a one-week first version and phased from there.
 company: Recharge
 role: Frontend lead, rewards & loyalty
-years: "TODO"
+years: "2022–2026"
 stack: [React, Vue, TypeScript]
 order: 1
 recreation: true
 ---
 import PunchCard from '../../components/demos/PunchCard.tsx';
+import PunchCardDesigner from '../../components/demos/PunchCardDesigner.tsx';
 
 ## Try it
 
-Place a few orders, redeem the reward, then refund an order to see how the card responds.
+This is the card as a customer sees it in their account. Place a few orders, redeem the
+reward, then refund an order to see how the card responds.
 Flip on "Make the next request fail" to see the error state.
 
 <PunchCard client:idle />
+
+## Make it theirs
+
+Merchants style the card from a form beside a live preview: copy, step icons, a banner,
+spacing, and whether steps without a reward show their order number. Drag "Orders placed"
+to watch the card fill, and switch to Phone to see the narrow layout.
+
+<PunchCardDesigner client:visible />
 
 ## The problem
 
