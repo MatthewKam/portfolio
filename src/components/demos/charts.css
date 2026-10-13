@@ -13,7 +13,7 @@
 .ch-key.ch-s2 { background: var(--series-2); }
 
 .ch-wrap { position: relative; }
-.ch svg { display: block; width: 100%; height: auto; overflow: visible; touch-action: pan-y; }
+.ch svg { display: block; width: 100%; height: 240px; overflow: visible; touch-action: pan-y; }
 .ch svg:focus-visible { outline: 3px solid var(--pine); outline-offset: 4px; border-radius: 4px; }
 .ch-grid { stroke: var(--mist-deep); stroke-width: 1; }
 .ch-base { stroke: var(--ink-soft); stroke-width: 1; }
@@ -49,7 +49,7 @@
 
 .ch-table { margin-top: 0.5rem; font-size: var(--step--1); }
 .ch-table summary { cursor: pointer; font-weight: 600; min-height: 44px; display: flex; align-items: center; }
-.ch-table-wrap { overflow-x: auto; }
+.ch-table-wrap { overflow-x: auto; position: relative; }
 .ch-table table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
 .ch-table th, .ch-table td { text-align: right; padding: 0.35rem 0.5rem; border-bottom: 1px solid var(--mist-deep); white-space: nowrap; }
 .ch-table th:first-child { text-align: left; }

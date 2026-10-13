@@ -3,6 +3,10 @@
   .cf { grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); align-items: start; }
 }
 .cf h4 { font-size: var(--step-1); margin: 0 0 0.6rem; }
+.cf-portal { background: #f6ead8; border: 1px solid #e3d2b8; border-radius: 12px; padding: clamp(1rem, 3vw, 1.4rem); color: #2a1d15; }
+.cf-portal button { border-color: #2a1d15; color: #2a1d15; }
+.cf-portal .primary { background: #3b2a20; color: #f6ead8; }
+.cf-portal .primary:hover:not(:disabled) { background: #5a3f2f; border-color: #5a3f2f; }
 .cf-step { border: 0; margin: 0; padding: 0; min-width: 0; }
 .cf-step legend { padding: 0; }
 .cf-step p { font-family: var(--font-body); margin: 0 0 1rem; }

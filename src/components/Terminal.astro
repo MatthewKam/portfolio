@@ -1,0 +1,368 @@
+---
+/**
+ * Terminal mode: the whole site as a command line. Opened from the nav's
+ * ">_" button or by visiting any page with #terminal. Content comes from the
+ * same sources as the rest of the site (career data, case studies, contact
+ * links), serialized once into a JSON script tag.
+ */
+import { getCollection } from 'astro:content';
+import { roles, skills } from '../data/career';
+import { contactLinks } from '../data/contact';
+
+const work = (await getCollection('work', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((w) => ({ slug: w.id, title: w.data.title, company: w.data.company, years: w.data.years, summary: w.data.summary }));
+
+const data = {
+  roles: [...roles]
+    .sort((a, b) => b.start.localeCompare(a.start))
+    .map(({ id, company, title, start, end, kind, summary, highlights, stack }) => ({ id, company, title, start, end, kind, summary, highlights, stack })),
+  skills,
+  work,
+  contact: contactLinks,
+};
+---
+<dialog class="term" id="terminal" aria-label="Terminal mode">
+  <div class="term-bar">
+    <span class="term-dots" aria-hidden="true"><i></i><i></i><i></i></span>
+    <span class="term-title">matt_kam</span>
+    <button type="button" class="term-close" data-term-close>Exit terminal</button>
+  </div>
+  <div class="term-body" data-term-body>
+    <div class="term-out" role="log" aria-live="polite" data-term-out></div>
+    <form class="term-line" data-term-form autocomplete="off">
+      <label for="term-input" class="term-prompt">$matt_kam&gt;</label>
+      <input id="term-input" class="term-input" data-term-input spellcheck="false" autocapitalize="off" enterkeyhint="go" />
+    </form>
+  </div>
+</dialog>
+
+<script type="application/json" id="term-data" set:html={JSON.stringify(data)} />
+
+<script>
+  type Role = { id: string; company: string; title: string; start: string; end: string | null; kind: string; summary: string; highlights: string[]; stack: string[] };
+  type Work = { slug: string; title: string; company: string; years: string; summary: string };
+  type Data = { roles: Role[]; skills: Record<string, string[]>; work: Work[]; contact: { label: string; href: string; external: boolean }[] };
+  /** One printed line: plain text, or pieces that can be links or styled. */
+  type Piece = string | { text: string; href?: string; cls?: string; external?: boolean };
+
+  const dlg = document.querySelector<HTMLDialogElement>('#terminal');
+  const out = dlg?.querySelector<HTMLElement>('[data-term-out]');
+  const body = dlg?.querySelector<HTMLElement>('[data-term-body]');
+  const form = dlg?.querySelector<HTMLFormElement>('[data-term-form]');
+  const input = dlg?.querySelector<HTMLInputElement>('[data-term-input]');
+  const raw = document.querySelector('#term-data')?.textContent;
+
+  if (dlg && out && body && form && input && raw) {
+    const data: Data = JSON.parse(raw);
+    const PROMPT = '$matt_kam>';
+    // The session (open state, output and command history) lives in sessionStorage,
+    // so moving between pages, or opening a case study from here, doesn't reset it.
+    const KEY = 'matt-kam-terminal';
+    type Session = { open: boolean; log: Piece[][]; history: string[] };
+    const session: Session = (() => {
+      try { return { open: false, log: [], history: [], ...JSON.parse(sessionStorage.getItem(KEY) ?? '{}') }; }
+      catch { return { open: false, log: [], history: [] }; }
+    })();
+    const save = () => { try { sessionStorage.setItem(KEY, JSON.stringify(session)); } catch { /* private mode: no persistence */ } };
+    const history = session.history;
+    let cursor = history.length;
+    let booted = session.log.length > 0;
+
+    const month = (ym: string) =>
+      new Date(`${ym}-01T00:00:00`).toLocaleString('en-US', { month: 'short', year: 'numeric' });
+    const span = (r: Role) => (r.start === r.end ? month(r.start) : `${month(r.start)} – ${r.end ? month(r.end) : 'present'}`);
+    const pad = (s: string, n: number) => s + ' '.repeat(Math.max(1, n - s.length));
+
+    function print(...lines: Piece[][]) {
+      session.log.push(...lines);
+      // Keep the stored session bounded.
+      if (session.log.length > 400) session.log.splice(0, session.log.length - 400);
+      render(lines);
+      save();
+    }
+    function render(lines: Piece[][]) {
+      for (const pieces of lines) {
+        const row = document.createElement('div');
+        row.className = 'term-row';
+        for (const p of pieces) {
+          if (typeof p === 'string') { row.append(...highlight(p)); continue; }
+          const el = document.createElement(p.href ? 'a' : 'span');
+          el.textContent = p.text;
+          if (p.cls) el.className = p.cls;
+          if (p.href && el instanceof HTMLAnchorElement) {
+            el.href = p.href;
+            if (p.external) { el.target = '_blank'; el.rel = 'noopener noreferrer'; }
+          }
+          row.append(el);
+        }
+        out!.append(row);
+      }
+      body!.scrollTop = body!.scrollHeight;
+    }
+    // Keywords that get their own color wherever they appear in output.
+    const escape = (w: string) => w.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const companies = [...new Set(data.roles.filter((r) => r.kind !== 'freelance').map((r) => r.company.replace(/,? Inc\.$/, '')))];
+    const tech = [...new Set([...Object.values(data.skills).flat(), ...data.roles.flatMap((r) => r.stack), 'Klaviyo', 'Cart.js', 'Flutter'])];
+    const words = [...companies.map((w) => [w, 'term-co']), ...tech.map((w) => [w, 'term-tech'])]
+      .sort((a, b) => b[0].length - a[0].length);
+    const KEYWORD = new RegExp(
+      `(?<![\\w/])(${words.map(([w]) => escape(w)).join('|')})(?![\\w])|(~?\\d[\\d,]*\\+|\\d+%|~\\d[\\d,]*)`, 'g',
+    );
+    const classOf = new Map(words.map(([w, c]) => [w.toLowerCase(), c]));
+
+    function highlight(text: string): (string | HTMLElement)[] {
+      const parts: (string | HTMLElement)[] = [];
+      let last = 0;
+      for (const m of text.matchAll(KEYWORD)) {
+        if (m.index! > last) parts.push(text.slice(last, m.index));
+        const el = document.createElement('span');
+        el.textContent = m[0];
+        el.className = m[1] ? classOf.get(m[1].toLowerCase()) ?? 'term-tech' : 'term-num';
+        parts.push(el);
+        last = m.index! + m[0].length;
+      }
+      if (last < text.length) parts.push(text.slice(last));
+      return parts;
+    }
+    const blank = () => print(['']);
+    const dim = (text: string) => ({ text, cls: 'term-dim' });
+    const hi = (text: string) => ({ text, cls: 'term-hi' });
+    const cmd = (text: string) => ({ text, cls: 'term-cmd' });
+
+    const findRole = (q: string) => data.roles.find((r) => r.id === q || r.company.toLowerCase().startsWith(q));
+    const findWork = (q: string) => {
+      const n = Number(q);
+      return Number.isInteger(n) && n >= 1 ? data.work[n - 1] : data.work.find((w) => w.slug === q || w.slug.startsWith(q));
+    };
+
+    const commands: Record<string, { help: string; run: (args: string[]) => void }> = {
+      help: {
+        help: 'list commands',
+        run: () => {
+          print([dim('Commands:')]);
+          for (const [name, c] of Object.entries(commands)) {
+            if (name === 'sudo') continue;
+            print(['  ', cmd(pad(name, 12)), dim(c.help)]);
+          }
+          print([dim('Tab completes, ↑/↓ walk your history, Esc leaves.')]);
+        },
+      },
+      whoami: {
+        help: 'who is Matt',
+        run: () => print(
+          [hi('Matt Kam'), ' · frontend engineer · Torrance, CA'],
+          ['Twelve years building interfaces people pay for. Started as a designer,'],
+          ['most recently rewards and loyalty at Recharge (TypeScript, React, Vue).'],
+        ),
+      },
+      experience: {
+        help: 'roles, or `experience <company>` for details',
+        run: ([q]) => {
+          if (q) {
+            const r = findRole(q.toLowerCase());
+            if (!r) return print([`experience: no role matching "${q}". Try `, cmd('experience'), '.']);
+            print([hi(r.company), ' · ', r.title], [dim(span(r))], [r.summary]);
+            for (const h of r.highlights) print(['  • ', h]);
+            if (r.stack.length) print([dim('stack: '), r.stack.join(', ')]);
+            return;
+          }
+          for (const r of data.roles) print([pad(r.company, 20), dim(pad(span(r), 22)), r.title]);
+          print([dim('Details: '), cmd('experience recharge')]);
+        },
+      },
+      work: {
+        help: 'case studies with live demos',
+        run: () => {
+          data.work.forEach((w, i) => print([dim(`${i + 1}. `), pad(w.title, 34), dim(`${w.company}, ${w.years}`)]));
+          print([dim('Open one: '), cmd('open 1'), dim(' or '), cmd(`open ${data.work[0]?.slug ?? ''}`)]);
+        },
+      },
+      open: {
+        help: 'open a case study, resume, linkedin or github',
+        run: ([q]) => {
+          if (!q) return print(['usage: ', cmd('open <number|name>')]);
+          const key = q.toLowerCase();
+          const link = data.contact.find((c) => c.label.toLowerCase().startsWith(key));
+          if (link) {
+            print([dim('opening '), { text: link.href, href: link.href, external: link.external }]);
+            window.open(link.href, '_blank', 'noopener');
+            return;
+          }
+          const w = findWork(key);
+          if (!w) return print([`open: nothing called "${q}". Try `, cmd('work'), '.']);
+          // Leave terminal mode for the project page; the session is kept for when it's reopened.
+          print([dim('opened '), hi(w.title), dim('. Press >_ to come back here.')]);
+          session.open = false;
+          save();
+          location.href = `/work/${w.slug}`;
+        },
+      },
+      skills: {
+        help: 'languages, tools, platforms',
+        run: () => { for (const [group, items] of Object.entries(data.skills)) print([hi(pad(group, 24)), items.join(', ')]); },
+      },
+      contact: {
+        help: 'how to reach me',
+        run: () => { for (const c of data.contact) print([pad(c.label, 14), { text: c.href.replace(/^https?:\/\//, ''), href: c.href, external: c.external }]); },
+      },
+      resume: { help: 'download the PDF', run: () => commands.open.run(['résumé']) },
+      clear: { help: 'clear the screen', run: () => { out!.textContent = ''; session.log = []; save(); } },
+      exit: { help: 'back to the regular site', run: () => close() },
+      sudo: { help: '', run: () => print(['Nice try. This incident will be reported to absolutely no one.']) },
+    };
+
+    function run(line: string) {
+      print([{ text: PROMPT, cls: 'term-user' }, ' ', line]);
+      const [name, ...args] = line.trim().split(/\s+/);
+      if (!name) return;
+      const c = commands[name.toLowerCase()];
+      if (c) c.run(args);
+      else print([`command not found: ${name}. Type `, cmd('help'), '.']);
+    }
+
+    function boot() {
+      print(
+        [hi('Matt Kam'), dim(' · portfolio, terminal edition')],
+        [dim('Type '), cmd('help'), dim(' to see what you can do, or start with '), cmd('work'), dim('.')],
+      );
+      blank();
+    }
+
+    function open() {
+      if (dlg!.open) return;
+      dlg!.showModal();
+      if (!booted) { boot(); booted = true; }
+      session.open = true;
+      save();
+      if (location.hash !== '#terminal') history_replace('#terminal');
+      body!.scrollTop = body!.scrollHeight;
+      input!.focus();
+    }
+    function close() {
+      if (dlg!.open) dlg!.close();
+    }
+    function history_replace(hash: string) {
+      window.history.replaceState(null, '', `${location.pathname}${location.search}${hash}`);
+    }
+
+    dlg.addEventListener('close', () => {
+      session.open = false;
+      save();
+      if (location.hash === '#terminal') history_replace('');
+    });
+
+    // Restore what was on screen before this page loaded.
+    render(session.log);
+
+    form.addEventListener('submit', (e) => {
+      e.preventDefault();
+      const line = input.value;
+      input.value = '';
+      if (line.trim()) { history.push(line); if (history.length > 100) history.shift(); cursor = history.length; save(); }
+      run(line);
+    });
+
+    // Tab completion, shell-style: one match completes the word; several fill in their
+    // shared prefix, and a second Tab lists them.
+    let lastTab = '';
+    function complete() {
+      const value = input!.value;
+      const words = value.trimStart().split(/\s+/);
+      const word = words[words.length - 1] ?? '';
+      const first = words.length === 1;
+      const name = words[0]?.toLowerCase();
+      const pool = first ? Object.keys(commands).filter((c) => c !== 'sudo')
+        : name === 'experience' ? data.roles.map((r) => r.id)
+        : name === 'open' ? [...data.work.map((w) => w.slug), 'linkedin', 'github', 'resume']
+        : [];
+      const hits = pool.filter((p) => p.startsWith(word.toLowerCase()));
+      if (!hits.length) return;
+      const shared = hits.reduce((a, b) => { let i = 0; while (i < a.length && a[i] === b[i]) i++; return a.slice(0, i); });
+      const head = value.slice(0, value.length - word.length);
+      if (hits.length === 1) input!.value = `${head}${hits[0]} `;
+      else if (shared.length > word.length) input!.value = head + shared;
+      else if (lastTab === value) print([{ text: hits.join('  '), cls: 'term-dim' }]);
+      lastTab = input!.value;
+    }
+
+    input.addEventListener('keydown', (e) => {
+      if (e.key === 'ArrowUp' && history.length) {
+        e.preventDefault(); cursor = Math.max(0, cursor - 1); input.value = history[cursor];
+      } else if (e.key === 'ArrowDown' && history.length) {
+        e.preventDefault(); cursor = Math.min(history.length, cursor + 1); input.value = history[cursor] ?? '';
+      } else if (e.key === 'Tab') {
+        e.preventDefault();
+        complete();
+      } else if (e.key === 'l' && e.ctrlKey) {
+        e.preventDefault(); commands.clear.run([]);
+      }
+    });
+
+    // Clicking anywhere in the terminal (except a link or text selection) returns focus to the prompt.
+    body.addEventListener('click', (e) => {
+      if ((e.target as HTMLElement).closest('a') || getSelection()?.toString()) return;
+      input.focus();
+    });
+    dlg.querySelector('[data-term-close]')?.addEventListener('click', close);
+    document.querySelectorAll('[data-term-open]').forEach((b) => b.addEventListener('click', open));
+    if (session.open || location.hash === '#terminal') open();
+  }
+</script>
+
+<style is:global>
+  /* Global (all rules prefixed .term): the output rows are created by the script,
+     so Astro's scoped styles wouldn't reach them. */
+  .term {
+    --t-bg: #0c1018; --t-fg: #d7dde6; --t-dim: #7d8899; --t-hi: #f0c75a; --t-cmd: #7cc2a8; --t-path: #8fb3ff;
+    --t-tech: #6fd3e8; --t-num: #f29bd0;
+    width: 100vw; height: 100dvh; max-width: none; max-height: none; margin: 0; padding: 0; border: 0;
+    background: var(--t-bg); color: var(--t-fg);
+    font-family: ui-monospace, 'SF Mono', SFMono-Regular, Menlo, Consolas, monospace; font-size: 15px; line-height: 1.55;
+  }
+  .term[open] { display: flex; flex-direction: column; animation: term-in 220ms ease-out; }
+  @keyframes term-in { from { opacity: 0; transform: scale(0.985); } }
+  .term::backdrop { background: var(--t-bg, #0c1018); }
+
+  .term-bar {
+    display: flex; align-items: center; gap: 0.75rem; padding: 0.55rem 1rem;
+    border-bottom: 1px solid #1c2433; background: #111724; font-size: 13px; color: var(--t-dim);
+  }
+  .term-dots { display: flex; gap: 6px; }
+  .term-dots i { width: 11px; height: 11px; border-radius: 50%; background: #3a4456; }
+  .term-dots i:first-child { background: #e0605a; }
+  .term-dots i:nth-child(2) { background: #e2b23c; }
+  .term-dots i:nth-child(3) { background: #4fae7e; }
+  .term-title { flex: 1; text-align: center; }
+  .term-close {
+    font: inherit; font-size: 12px; color: var(--t-fg); background: transparent; cursor: pointer;
+    border: 1px solid #2c3648; border-radius: 6px; padding: 0.35rem 0.7rem; min-height: 36px;
+  }
+  .term-close:hover { border-color: var(--t-cmd); color: var(--t-cmd); }
+
+  .term-body { flex: 1; overflow-y: auto; padding: 1rem clamp(1rem, 4vw, 2rem) 2rem; cursor: text; }
+  .term-out { max-width: 90ch; }
+  .term-row { white-space: pre-wrap; overflow-wrap: anywhere; min-height: 1.55em; }
+  .term-dim { color: var(--t-dim); }
+  .term-hi { color: var(--t-hi); font-weight: 600; }
+  .term-cmd { color: var(--t-cmd); }
+  .term-user { color: var(--t-cmd); }
+  .term-co { color: var(--t-hi); }
+  .term-tech { color: var(--t-tech); }
+  .term-num { color: var(--t-num); font-weight: 600; }
+  .term a { color: var(--t-path); text-decoration: underline; text-underline-offset: 0.2em; }
+  .term a:hover { color: var(--t-hi); }
+
+  .term-line { display: flex; gap: 0.6ch; max-width: 90ch; }
+  .term-prompt { white-space: nowrap; color: var(--t-cmd); }
+  .term-input {
+    flex: 1; min-width: 0; font: inherit; color: var(--t-fg); background: transparent;
+    border: 0; outline: none; caret-color: var(--t-hi); padding: 0;
+  }
+  .term :focus-visible { outline: 2px solid var(--t-cmd); outline-offset: 2px; }
+  .term .term-input:focus-visible { outline: none; }
+
+  @media (max-width: 40rem) {
+    .term { font-size: 13px; }
+  }
+</style>

@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { fakeApi, money, LOCALES, type Currency } from './shared';
+import CustomerPortal from './CustomerPortal';
 import './demo.css';
 import './CancellationFlow.css';
 
@@ -143,113 +144,113 @@ export default function CancellationFlow() {
 
   return (
     <div className="demo cf">
-      <div className="demo-frame demo-shop cf-portal" aria-busy={pending !== null}>
-        <p className="demo-frame-label">Customer account · Loam Coffee Co.</p>
-
-        {step === 'manage' && (
-          <div className="cf-step">
-            <h4>Your subscription</h4>
-            <dl className="cf-sub">
-              <div><dt>Coffee</dt><dd>{sub.product}</dd></div>
-              <div><dt>Every</dt><dd>{sub.weeks} weeks</dd></div>
-              <div><dt>Next bag</dt><dd>{fmtDate(sub.next)}</dd></div>
-              <div>
-                <dt>Price</dt>
-                <dd>
-                  {fmtMoney(unitPrice)}
-                  {sub.discount && <small> ({sub.discount.percent}% off, next {sub.discount.orders} orders)</small>}
-                </dd>
-              </div>
-            </dl>
-            <button type="button" className="quiet" onClick={() => setStep('reason')}>
-              Cancel subscription
-            </button>
-          </div>
-        )}
-
-        {step === 'reason' && (
-          <fieldset className="cf-step">
-            <legend><h4>Before you go, what's the main reason?</h4></legend>
-            <div className="cf-reasons">
-              {REASONS.map((r) => (
-                <label key={r.id} className={reason === r.id ? 'is-on' : ''}>
-                  <input type="radio" name="cf-reason" value={r.id} checked={reason === r.id} onChange={() => setReason(r.id)} />
-                  {r.label}
-                </label>
-              ))}
-            </div>
-            <div className="cf-actions">
-              <button type="button" className="primary" disabled={!reason} onClick={chooseReason}>Continue</button>
-              <button type="button" className="quiet" onClick={() => setStep('manage')}>Never mind</button>
-            </div>
-          </fieldset>
-        )}
-
-        {step === 'offer' && chosen?.offer && (() => {
-          const copy = offerCopy(chosen.offer);
-          return (
+      <CustomerPortal active="Subscriptions" aside={null}>
+        <div className="cf-portal" aria-busy={pending !== null}>
+          {step === 'manage' && (
             <div className="cf-step">
-              <p className="cf-eyebrow">Because you said: {chosen.label.toLowerCase()}</p>
-              <h4>{copy.title}</h4>
-              <p>{copy.body}</p>
-              {chosen.offer.kind === 'swap' && (
-                <label className="cf-swap">
-                  Coffee
-                  <select value={swapTo} onChange={(e) => setSwapTo(e.target.value)}>
-                    {PRODUCTS.filter((p) => p !== sub.product).map((p) => (
-                      <option key={p} value={p}>{p}, {fmtMoney(price(p))}</option>
-                    ))}
-                  </select>
-                </label>
-              )}
+              <h4>Your subscription</h4>
+              <dl className="cf-sub">
+                <div><dt>Coffee</dt><dd>{sub.product}</dd></div>
+                <div><dt>Every</dt><dd>{sub.weeks} weeks</dd></div>
+                <div><dt>Next bag</dt><dd>{fmtDate(sub.next)}</dd></div>
+                <div>
+                  <dt>Price</dt>
+                  <dd>
+                    {fmtMoney(unitPrice)}
+                    {sub.discount && <small> ({sub.discount.percent}% off, next {sub.discount.orders} orders)</small>}
+                  </dd>
+                </div>
+              </dl>
+              <button type="button" className="quiet" onClick={() => setStep('reason')}>
+                Cancel subscription
+              </button>
+            </div>
+          )}
+
+          {step === 'reason' && (
+            <fieldset className="cf-step">
+              <legend><h4>Before you go, what's the main reason?</h4></legend>
+              <div className="cf-reasons">
+                {REASONS.map((r) => (
+                  <label key={r.id} className={reason === r.id ? 'is-on' : ''}>
+                    <input type="radio" name="cf-reason" value={r.id} checked={reason === r.id} onChange={() => setReason(r.id)} />
+                    {r.label}
+                  </label>
+                ))}
+              </div>
               <div className="cf-actions">
-                <button type="button" className="primary" onClick={acceptOffer} disabled={pending !== null}>
-                  {pending ? 'Saving…' : copy.cta}
+                <button type="button" className="primary" disabled={!reason} onClick={chooseReason}>Continue</button>
+                <button type="button" className="quiet" onClick={() => setStep('manage')}>Never mind</button>
+              </div>
+            </fieldset>
+          )}
+
+          {step === 'offer' && chosen?.offer && (() => {
+            const copy = offerCopy(chosen.offer);
+            return (
+              <div className="cf-step">
+                <p className="cf-eyebrow">Because you said: {chosen.label.toLowerCase()}</p>
+                <h4>{copy.title}</h4>
+                <p>{copy.body}</p>
+                {chosen.offer.kind === 'swap' && (
+                  <label className="cf-swap">
+                    Coffee
+                    <select value={swapTo} onChange={(e) => setSwapTo(e.target.value)}>
+                      {PRODUCTS.filter((p) => p !== sub.product).map((p) => (
+                        <option key={p} value={p}>{p}, {fmtMoney(price(p))}</option>
+                      ))}
+                    </select>
+                  </label>
+                )}
+                <div className="cf-actions">
+                  <button type="button" className="primary" onClick={acceptOffer} disabled={pending !== null}>
+                    {pending ? 'Saving…' : copy.cta}
+                  </button>
+                  <button type="button" className="quiet" onClick={() => setStep('confirm')} disabled={pending !== null}>
+                    No thanks, continue cancelling
+                  </button>
+                </div>
+              </div>
+            );
+          })()}
+
+          {step === 'confirm' && (
+            <div className="cf-step">
+              <h4>Cancel your subscription?</h4>
+              <p>You won't be charged again. Your {fmtDate(sub.next)} bag won't ship.</p>
+              <label className="cf-note">
+                Anything we could do better? (optional)
+                <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
+              </label>
+              <div className="cf-actions">
+                <button type="button" className="primary" onClick={confirmCancel} disabled={pending !== null}>
+                  {pending ? 'Cancelling…' : 'Cancel subscription'}
                 </button>
-                <button type="button" className="quiet" onClick={() => setStep('confirm')} disabled={pending !== null}>
-                  No thanks, continue cancelling
+                <button type="button" className="quiet" onClick={() => setStep('manage')} disabled={pending !== null}>
+                  Keep my subscription
                 </button>
               </div>
             </div>
-          );
-        })()}
+          )}
 
-        {step === 'confirm' && (
-          <div className="cf-step">
-            <h4>Cancel your subscription?</h4>
-            <p>You won't be charged again. Your {fmtDate(sub.next)} bag won't ship.</p>
-            <label className="cf-note">
-              Anything we could do better? (optional)
-              <textarea rows={3} value={note} onChange={(e) => setNote(e.target.value)} />
-            </label>
-            <div className="cf-actions">
-              <button type="button" className="primary" onClick={confirmCancel} disabled={pending !== null}>
-                {pending ? 'Cancelling…' : 'Cancel subscription'}
-              </button>
-              <button type="button" className="quiet" onClick={() => setStep('manage')} disabled={pending !== null}>
-                Keep my subscription
-              </button>
+          {step === 'saved' && (
+            <div className="cf-step" role="status">
+              <h4>You're all set</h4>
+              <p>Your subscription is updated. Next bag: {sub.product.split(',')[0]} on {fmtDate(sub.next)}, {fmtMoney(unitPrice)}.</p>
+              <button type="button" onClick={() => setStep('manage')}>Back to subscription</button>
             </div>
-          </div>
-        )}
+          )}
 
-        {step === 'saved' && (
-          <div className="cf-step" role="status">
-            <h4>You're all set</h4>
-            <p>Your subscription is updated. Next bag: {sub.product.split(',')[0]} on {fmtDate(sub.next)}, {fmtMoney(unitPrice)}.</p>
-            <button type="button" onClick={() => setStep('manage')}>Back to subscription</button>
-          </div>
-        )}
+          {step === 'cancelled' && (
+            <div className="cf-step" role="status">
+              <h4>Your subscription is cancelled</h4>
+              <p>Thanks for drinking Loam. You can restart any time from your account.</p>
+            </div>
+          )}
 
-        {step === 'cancelled' && (
-          <div className="cf-step" role="status">
-            <h4>Your subscription is cancelled</h4>
-            <p>Thanks for drinking Loam. You can restart any time from your account.</p>
-          </div>
-        )}
-
-        {error && <p className="demo-msg demo-msg-error" role="alert">{error}</p>}
-      </div>
+          {error && <p className="demo-msg demo-msg-error" role="alert">{error}</p>}
+        </div>
+      </CustomerPortal>
 
       <div className="cf-side">
         <div className="demo-controls" role="group" aria-label="Demo controls">

@@ -16,7 +16,7 @@
 .ad-tiles dt { font-size: var(--step--1); color: var(--ink-soft); }
 .ad-tiles dd { margin: 0.15rem 0 0; font-size: var(--step-2); font-weight: 700; font-variant-numeric: tabular-nums; line-height: 1.15; }
 
-.ad-table-wrap { overflow-x: auto; }
+.ad-table-wrap { overflow-x: auto; position: relative; } /* contains .visually-hidden labels */
 .ad table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; font-size: var(--step--1); }
 .ad th, .ad td { padding: 0.55rem 0.6rem; text-align: right; border-bottom: 1px solid var(--mist-deep); white-space: nowrap; }
 .ad thead th { color: var(--ink-soft); font-weight: 500; }
@@ -62,6 +62,13 @@
 .ad-toolbar { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.6rem 1rem; margin-bottom: 0.5rem; }
 .ad-chips { display: flex; flex-wrap: wrap; gap: 0.4rem; }
 .ad .ad-chip { min-height: 40px; padding: 0.3rem 0.85rem; font-size: var(--step--1); border-color: var(--mist-deep); background: var(--mist); }
+.ad .ad-chip.ad-good { color: var(--pine); }
+.ad .ad-chip.ad-warn { color: #9a6a00; }
+.ad .ad-chip.ad-bad { color: #b4432f; }
+@media (prefers-color-scheme: dark) {
+  .ad .ad-chip.ad-warn { color: var(--lamp); }
+  .ad .ad-chip.ad-bad { color: #f08a76; }
+}
 .ad .ad-chip[aria-pressed='true'] { border-color: currentColor; box-shadow: 0 0 0 1px currentColor inset; }
 .ad-search {
   font: inherit; color: var(--ink); background: var(--mist); min-height: 40px; min-width: 0; flex: 0 1 14rem;
@@ -78,3 +85,9 @@
 .ad-empty { text-align: center !important; color: var(--ink-soft); padding: 1.5rem !important; }
 
 .ad-more { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-top: 0.5rem; font-size: var(--step--1); color: var(--ink-soft); }
+
+@media (max-width: 36rem) {
+  .ad-table .ad-opt { display: none; }
+  /* Icon only on phones; the label stays available to screen readers. */
+  .ad-table .ad-status-label { position: absolute; width: 1px; height: 1px; overflow: hidden; clip: rect(0 0 0 0); white-space: nowrap; }
+}
