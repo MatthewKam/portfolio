@@ -4,12 +4,12 @@ import './demo.css';
 import './AdDashboard.css';
 
 /**
- * Funnel performance dashboard for account managers. Illustrative: clients,
+ * Funnel performance dashboard for affiliate managers. Illustrative: affiliates,
  * funnels and numbers are invented, and the layout is a reconstruction of the
  * kind of view the team used, not a copy of it.
- * The question it answers: for the money a client put in, where did the sales
+ * The question it answers: for the money a affiliate put in, where did the sales
  * come from, and where are people dropping out of the funnel?
- * An account manager might carry 5 or 100 clients, so the page is built to
+ * An affiliate manager might carry 5 or 100 affiliates, so the page is built to
  * surface the ones that need attention first: status counts double as filters,
  * the default sort is worst return first, and long books are trimmed to 10 rows.
  */
@@ -17,7 +17,7 @@ import './AdDashboard.css';
 const SOURCES = ['Search', 'Social', 'Native', 'Email'] as const;
 type Source = (typeof SOURCES)[number];
 
-// How each source converts relative to its cost; the same for every client.
+// How each source converts relative to its cost; the same for every affiliate.
 const SOURCE_FIT: Record<Source, { cpc: number; fit: number }> = {
   Search: { cpc: 1.4, fit: 1.2 },
   Social: { cpc: 1.0, fit: 0.85 },
@@ -39,18 +39,19 @@ function rng(seed: number) {
 }
 
 const FIRST = ['Brightside', 'Summit', 'Northwind', 'Hearth', 'Bluebird', 'Ironwood', 'Clearwater', 'Juniper', 'Copperline', 'Maple', 'Harbor', 'Redstone', 'Lumen', 'Fieldstone', 'Silverleaf', 'Oakmont', 'Tidewater', 'Wildflower', 'Granite', 'Sunday'];
-const SECOND = ['Skincare', 'Supplements', 'Fitness', 'Home', 'Pet Co.', 'Nutrition', 'Sleep', 'Kitchen', 'Wellness', 'Outdoors'];
+// Affiliates are publishers and traffic partners, so the invented names read like media outlets.
+const SECOND = ['Media', 'Deals', 'Reviews', 'Digital', 'Daily', 'Network', 'Insider', 'Labs', 'Guide', 'Traffic'];
 const OFFERS = ['Free trial', 'Starter kit', '30-day program', 'Bundle', 'Subscription box', 'Intro offer'];
 const PRICES = [29, 39, 49, 59, 79, 89];
 
-const MAX_CLIENTS = 100;
+const MAX_AFFILIATES = 100;
 const DAYS = 90;
-const CLIENTS = Array.from({ length: MAX_CLIENTS }, (_, i) => {
+const AFFILIATES = Array.from({ length: MAX_AFFILIATES }, (_, i) => {
   const r = rng(i * 31 + 3);
   return {
     id: `c${i}`,
     // Step through both name lists so the first 100 are all distinct.
-    client: `${FIRST[i % FIRST.length]} ${SECOND[(i + Math.floor(i / FIRST.length)) % SECOND.length]}`,
+    affiliate: `${FIRST[i % FIRST.length]} ${SECOND[(i + Math.floor(i / FIRST.length)) % SECOND.length]}`,
     name: OFFERS[Math.floor(r() * OFFERS.length)],
     price: PRICES[Math.floor(r() * PRICES.length)],
     quality: 0.78 + r() * 0.5,
@@ -58,7 +59,7 @@ const CLIENTS = Array.from({ length: MAX_CLIENTS }, (_, i) => {
 });
 
 const DATA: Record<string, Record<Source, Row[]>> = {};
-for (const [ci, c] of CLIENTS.entries()) {
+for (const [ci, c] of AFFILIATES.entries()) {
   DATA[c.id] = {} as Record<Source, Row[]>;
   for (const [si, s] of SOURCES.entries()) {
     const r = rng(ci * 100 + si + 7);
@@ -102,10 +103,10 @@ function Status({ value }: { value: number }) {
   return <span className={`ad-status ad-${k}`}><span aria-hidden="true">{STATUS[k].icon}</span> <span className="ad-status-label">{STATUS[k].label}</span></span>;
 }
 
-type SortKey = 'client' | 'spend' | 'sales' | 'revenue' | 'return';
+type SortKey = 'affiliate' | 'spend' | 'sales' | 'revenue' | 'return';
 // `optional` columns are hidden on narrow screens so Return and status stay visible.
 const COLUMNS: { key: SortKey; label: string; optional?: boolean }[] = [
-  { key: 'client', label: 'Client' },
+  { key: 'affiliate', label: 'Affiliate' },
   { key: 'spend', label: 'Spend' },
   { key: 'sales', label: 'Sales', optional: true },
   { key: 'revenue', label: 'Revenue', optional: true },
@@ -127,7 +128,7 @@ export default function AdDashboard() {
   const slice = (id: string, s: Source) => DATA[id][s].slice(-range);
 
   const rows = useMemo(
-    () => CLIENTS.slice(0, book).map((c) => {
+    () => AFFILIATES.slice(0, book).map((c) => {
       const t = total(sources.flatMap((s) => slice(c.id, s)));
       return { ...c, t, roi: roi(t), status: statusOf(roi(t)) };
     }),
@@ -141,10 +142,10 @@ export default function AdDashboard() {
 
   const q = query.trim().toLowerCase();
   const value = (r: (typeof rows)[number]) =>
-    ({ client: r.client, spend: r.t.spend, sales: r.t.steps[2], revenue: r.t.revenue, return: r.roi })[sort.key];
+    ({ affiliate: r.affiliate, spend: r.t.spend, sales: r.t.steps[2], revenue: r.t.revenue, return: r.roi })[sort.key];
   const filtered = rows
     .filter((r) => !status || r.status === status)
-    .filter((r) => !q || `${r.client} ${r.name}`.toLowerCase().includes(q))
+    .filter((r) => !q || `${r.affiliate} ${r.name}`.toLowerCase().includes(q))
     .sort((a, b) => {
       const x = value(a), y = value(b);
       return (typeof x === 'string' ? x.localeCompare(y as string) : (x as number) - (y as number)) * sort.dir;
@@ -152,14 +153,14 @@ export default function AdDashboard() {
   const visible = showAll ? filtered : filtered.slice(0, PAGE);
 
   const sortBy = (key: SortKey) =>
-    setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: key === 'client' || key === 'return' ? 1 : -1 }));
+    setSort((s) => (s.key === key ? { key, dir: (s.dir * -1) as 1 | -1 } : { key, dir: key === 'affiliate' || key === 'return' ? 1 : -1 }));
 
   return (
     <div className="demo ad">
       <div className="demo-controls" role="group" aria-label="Demo controls">
         <p className="demo-controls-title">Demo controls</p>
-        <div className="ad-seg" role="group" aria-label="Clients this account manager handles">
-          <span className="ad-seg-label">Clients managed</span>
+        <div className="ad-seg" role="group" aria-label="Affiliates this manager handles">
+          <span className="ad-seg-label">Affiliates managed</span>
           {([5, 25, 100] as const).map((n) => (
             <button key={n} type="button" aria-pressed={book === n} onClick={() => { setBook(n); setShowAll(false); setOpen(null); }}>{n}</button>
           ))}
@@ -168,7 +169,7 @@ export default function AdDashboard() {
 
       <div className="demo-frame ad-frame">
         <div className="ad-filters" role="group" aria-label="Filters">
-          <p className="demo-frame-label">Account dashboard · {book} clients</p>
+          <p className="demo-frame-label">Affiliate dashboard · {book} affiliates</p>
           <div className="ad-seg" role="group" aria-label="Date range">
             {([7, 30, 90] as const).map((r) => (
               <button key={r} type="button" aria-pressed={range === r} onClick={() => setRange(r)}>{r} days</button>
@@ -202,14 +203,14 @@ export default function AdDashboard() {
             ))}
           </div>
           <input
-            type="search" className="ad-search" placeholder="Search clients" aria-label="Search clients"
+            type="search" className="ad-search" placeholder="Search affiliates" aria-label="Search affiliates"
             value={query} onChange={(e) => { setQuery(e.target.value); setShowAll(false); }}
           />
         </div>
 
         <div className="ad-table-wrap">
           <table className="ad-table">
-            <caption className="visually-hidden">Clients. Select a client for its funnel breakdown.</caption>
+            <caption className="visually-hidden">Affiliates. Select a affiliate for its funnel breakdown.</caption>
             <thead>
               <tr>
                 {COLUMNS.map((c) => (
@@ -229,7 +230,7 @@ export default function AdDashboard() {
                   <tr className={open === r.id ? 'is-open' : ''}>
                     <th scope="row">
                       <button type="button" aria-expanded={open === r.id} onClick={() => setOpen(open === r.id ? null : r.id)}>
-                        <strong>{r.client}</strong>
+                        <strong>{r.affiliate}</strong>
                         <small>{r.name}</small>
                       </button>
                     </th>
@@ -241,13 +242,13 @@ export default function AdDashboard() {
                   </tr>
                   {open === r.id && (
                     <tr className="ad-detail-row">
-                      <td colSpan={6}><Detail client={r} source={source} slice={slice} /></td>
+                      <td colSpan={6}><Detail affiliate={r} source={source} slice={slice} /></td>
                     </tr>
                   )}
                 </Fragment>
               ))}
               {filtered.length === 0 && (
-                <tr><td colSpan={6} className="ad-empty">No clients match. Clear the search or status filter.</td></tr>
+                <tr><td colSpan={6} className="ad-empty">No affiliates match. Clear the search or status filter.</td></tr>
               )}
             </tbody>
           </table>
@@ -264,12 +265,12 @@ export default function AdDashboard() {
   );
 }
 
-function Detail({ client, source, slice }: {
-  client: { id: string; t: Row };
+function Detail({ affiliate, source, slice }: {
+  affiliate: { id: string; t: Row };
   source: Source | 'All';
   slice: (id: string, s: Source) => Row[];
 }) {
-  const t = client.t;
+  const t = affiliate.t;
   return (
     <div className="ad-detail-grid">
       <figure className="ad-funnel">
@@ -302,7 +303,7 @@ function Detail({ client, source, slice }: {
           </thead>
           <tbody>
             {SOURCES.map((s) => {
-              const st = total(slice(client.id, s));
+              const st = total(slice(affiliate.id, s));
               const dim = source !== 'All' && source !== s;
               return (
                 <tr key={s} className={dim ? 'is-dim' : ''}>
