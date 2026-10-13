@@ -1,0 +1,97 @@
+---
+/**
+ * Depth view: the same home page content, told as a flight through the hero
+ * scene. Switched to from the nav; the classic home page stays at "/".
+ */
+import Base from '../layouts/Base.astro';
+import DepthScene from '../components/depth/DepthScene.astro';
+import Career from '../components/Career.astro';
+import WorkList from '../components/WorkList.astro';
+import AboutText from '../components/AboutText.astro';
+import { contactLinks } from '../data/contact';
+---
+<Base title="Depth view" showFooter={false}>
+  <DepthScene />
+  <div class="depth">
+    <section class="d-sec d-home wrap" id="home" data-depth-section aria-labelledby="d-title">
+      <h1 id="d-title">Matt Kam</h1>
+      <p class="lede">
+        Frontend engineer who started as a designer. Twelve years building interfaces people
+        pay for, most recently rewards and loyalty at Recharge.
+      </p>
+      <a class="cta" href="#experience">Scroll to go deeper ↓</a>
+    </section>
+
+    <div class="d-sec d-panel d-long" data-depth-section data-fade="0.45"><Career /></div>
+    <div class="d-sec d-panel d-long" data-depth-section data-fade="0.45"><WorkList /></div>
+
+    <section class="d-sec d-panel" id="about" data-depth-section aria-labelledby="d-about-title">
+      <div class="wrap">
+        <h2 id="d-about-title">About</h2>
+        <AboutText />
+      </div>
+    </section>
+
+    <section class="d-sec d-end" id="contact" data-depth-section aria-labelledby="d-end-title">
+      <div class="wrap">
+        <h2 id="d-end-title">Get in touch</h2>
+        <p>That's the whole journey. If you'd like to talk, I'm one message away.</p>
+        <ul>
+          {contactLinks.map((l) => (
+            <li><a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{l.label}</a></li>
+          ))}
+        </ul>
+      </div>
+    </section>
+  </div>
+</Base>
+
+<style is:global>
+  html:has(.depth) { scroll-behavior: smooth; }
+  /* Sections slide under the nav as they leave; give it a solid ground in this view. */
+  html:has(.depth) .nav { opacity: 1; background: color-mix(in srgb, var(--mist) 88%, transparent); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+  @media (prefers-reduced-motion: reduce) { html:has(.depth) { scroll-behavior: auto; } }
+</style>
+
+<style>
+  .depth { position: relative; z-index: 1; }
+  /* Travel between sections: this is where each doorway layer is passed. Short enough
+     that the outgoing and incoming sections crossfade, so there's never an empty screen. */
+  .d-sec { margin-bottom: 30vh; scroll-margin-top: 5rem; will-change: opacity, transform; }
+  /* A longer, slower doorway after Experience and after Work. */
+  .d-long { margin-bottom: 38vh; }
+
+  .d-home { min-height: calc(100svh - 4.5rem); padding-top: clamp(4rem, 14vh, 8rem); margin-bottom: 5vh; }
+  .d-home h1 { font-size: var(--step-5); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.3em; }
+  .d-home .lede { font-size: var(--step-1); max-width: 34ch; color: var(--ink-soft); margin: 0 0 2rem; }
+  .cta {
+    display: inline-block; font-family: var(--font-display); font-weight: 600;
+    background: var(--ink); color: var(--mist); padding: 0.8rem 1.4rem; border-radius: 999px; text-decoration: none;
+  }
+  .cta:hover { color: var(--mist); background: var(--pine); }
+
+  /* Content panels float over the scene so text stays readable. */
+  .d-panel {
+    width: min(72rem, calc(100% - 2 * var(--gutter))); margin-inline: auto;
+    background: color-mix(in srgb, var(--mist) 88%, transparent);
+    backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+    border: 1px solid color-mix(in srgb, var(--mist-deep) 70%, transparent);
+    border-radius: 20px; padding-block: 0.5rem 2.5rem;
+  }
+  .d-panel :global(.wrap) { padding-inline: clamp(1rem, 3vw, 2.5rem); }
+  .d-panel :global(#experience), .d-panel :global(#work) { padding-top: 2.5rem; }
+  #about h2 { font-size: var(--step-3); padding-top: 2rem; }
+
+  /* The sun has filled the screen by now; dark text reads on it in both themes. */
+  .d-end { min-height: 100svh; display: grid; align-content: center; margin-bottom: 0; color: #2a1d15; }
+  .d-end h2 { font-size: var(--step-5); letter-spacing: -0.03em; }
+  .d-end p { font-size: var(--step-1); max-width: 36ch; }
+  .d-end ul { list-style: none; padding: 0; margin: 1.5rem 0 0; display: flex; flex-wrap: wrap; gap: 0.75rem; }
+  .d-end a {
+    display: inline-block; font-family: var(--font-display); font-weight: 600; text-decoration: none;
+    color: #f6ead8; background: #2a1d15; padding: 0.8rem 1.4rem; border-radius: 999px;
+  }
+  .d-end a:hover { background: #5a3f2f; color: #f6ead8; }
+  /* Without the live scene (reduced motion), give the finale its own sun-colored ground. */
+  :global(html:not(.depth-live)) .d-end { background: var(--lamp); }
+</style>
