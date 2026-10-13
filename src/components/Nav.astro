@@ -1,0 +1,48 @@
+---
+const path = Astro.url.pathname;
+const links = [
+  { href: '/#work', label: 'Work' },
+  { href: '/about', label: 'About' },
+  { href: '#contact', label: 'Contact' },
+];
+---
+<header class="nav" data-nav>
+  <nav class="wrap nav-inner" aria-label="Primary">
+    <a class="name" href="/" aria-current={path === '/' ? 'page' : undefined}>Matt Kam</a>
+    <ul>
+      {links.map((l) => (
+        <li><a href={l.href} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a></li>
+      ))}
+    </ul>
+  </nav>
+</header>
+
+<script>
+  // Quiet by default; firms up when the reader scrolls up (intent to navigate).
+  const nav = document.querySelector<HTMLElement>('[data-nav]');
+  let lastY = window.scrollY;
+  window.addEventListener('scroll', () => {
+    const y = window.scrollY;
+    nav?.classList.toggle('is-solid', y > 80 && y < lastY);
+    lastY = y;
+  }, { passive: true });
+</script>
+
+<style>
+  .nav {
+    position: sticky; top: 0; z-index: 50;
+    opacity: 0.7;
+    transition: opacity 200ms ease, background-color 200ms ease;
+  }
+  .nav:hover, .nav:focus-within, .nav.is-solid {
+    opacity: 1;
+    background: color-mix(in srgb, var(--mist) 80%, transparent);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+  }
+  .nav-inner { display: flex; align-items: center; justify-content: space-between; gap: 1rem; padding-block: 1rem; }
+  .name { font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); text-decoration: none; }
+  ul { display: flex; gap: clamp(0.9rem, 3vw, 2rem); list-style: none; margin: 0; padding: 0; }
+  ul a { font-family: var(--font-display); font-weight: 500; text-decoration: none; padding: 0.5rem 0; }
+  ul a:hover, ul a[aria-current='page'] { text-decoration: underline; }
+</style>

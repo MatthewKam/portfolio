@@ -1,0 +1,55 @@
+---
+import Base from '../../layouts/Base.astro';
+import { getCollection, render } from 'astro:content';
+
+export async function getStaticPaths() {
+  const work = await getCollection('work', ({ data }) => !data.draft);
+  return work.map((entry) => ({ params: { slug: entry.id }, props: { entry } }));
+}
+
+const { entry } = Astro.props;
+const { Content } = await render(entry);
+const d = entry.data;
+---
+<Base title={d.title} description={d.summary}>
+  <article class="wrap case">
+    <header>
+      <a class="back" href="/#work">All work</a>
+      <h1>{d.title}</h1>
+      <p class="summary">{d.summary}</p>
+      <dl class="facts">
+        <div><dt>Company</dt><dd>{d.company}</dd></div>
+        <div><dt>Role</dt><dd>{d.role}</dd></div>
+        <div><dt>When</dt><dd>{d.years}</dd></div>
+        <div><dt>Stack</dt><dd>{d.stack.join(', ')}</dd></div>
+      </dl>
+      {d.recreation && (
+        <p class="note">
+          The demos here are recreations with a fictional brand, Loam Coffee Co., and fake data.
+          The original feature was built at {d.company}.
+        </p>
+      )}
+    </header>
+    <div class="prose">
+      <Content />
+    </div>
+  </article>
+</Base>
+
+<style>
+  .case { padding-top: 3rem; }
+  .back { font-family: var(--font-display); font-size: var(--step--1); color: var(--ink-soft); }
+  h1 { font-size: var(--step-5); margin-top: 1.5rem; letter-spacing: -0.03em; }
+  .summary { font-size: var(--step-1); max-width: 40ch; color: var(--ink-soft); }
+  .facts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1.25rem 2rem; margin: 2.5rem 0; padding: 1.5rem 0;
+    border-block: 1px solid var(--mist-deep);
+  }
+  dt { font-family: var(--font-display); font-size: var(--step--1); color: var(--ink-soft); }
+  dd { margin: 0.2rem 0 0; font-family: var(--font-display); font-weight: 500; }
+  .note {
+    max-width: var(--measure); font-size: var(--step--1); color: var(--ink-soft);
+    border-left: 3px solid var(--lamp); padding-left: 1rem; margin-bottom: 3rem;
+  }
+</style>
