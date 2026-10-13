@@ -1,0 +1,51 @@
+---
+title: Referrals & rewards
+summary: A referral program merchants configure in minutes, with store credit set per currency and a landing page that updates as they type.
+company: Recharge
+role: Frontend engineer, rewards & loyalty
+years: "2022–2026"
+stack: [React, TypeScript]
+order: 3
+recreation: true
+---
+import Referrals from '../../components/demos/Referrals.tsx';
+import ReferralAnalytics from '../../components/demos/ReferralAnalytics.tsx';
+import RewardsAnalytics from '../../components/demos/RewardsAnalytics.tsx';
+
+## Try it
+
+Change the rewards on the left and watch the customer landing page on the right. Switch the
+shopper's country to see the credit in their currency.
+
+<Referrals client:idle />
+
+## Referral performance
+
+Merchants need to know whether the program pays for itself. This page shows referral revenue,
+referred orders and rewards given, with each month split by whether the friend bought once or
+started a subscription. Hover or use the arrow keys on the chart to read a month.
+
+<ReferralAnalytics client:visible />
+
+## Rewards performance
+
+Credit only matters if customers come back to use it. This page compares what rewards members
+spend over their first twelve orders against everyone else, and tracks credit from issued to
+redeemed, expired or still owed.
+
+<RewardsAnalytics client:visible />
+
+## The problem
+
+{/* TODO (interview) */}
+Placeholder.
+
+## What I did
+
+{/* TODO (interview) */}
+Placeholder.
+
+## Result
+
+{/* TODO (interview) */}
+Placeholder.

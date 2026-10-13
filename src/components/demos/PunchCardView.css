@@ -1,0 +1,35 @@
+.pcv {
+  width: 100%; background: #f6ead8; color: #2a1d15; border: 1px solid #e3d2b8; border-radius: 14px;
+  padding: clamp(1rem, 3vw, 1.5rem); font-family: var(--font-display);
+}
+.pcv-head { display: flex; justify-content: space-between; align-items: baseline; gap: 1rem; }
+.pcv h4 { font-size: var(--step-2); margin: 0 0 0.4rem; }
+.pcv-count { margin: 0; font-weight: 700; font-size: var(--step-1); font-variant-numeric: tabular-nums; white-space: nowrap; }
+.pcv-desc { font-family: var(--font-body); margin: 0 0 1.25rem; }
+
+.pcv-banner { margin-bottom: 1rem; border-radius: 10px; overflow: hidden; aspect-ratio: 8 / 3; }
+.pcv-banner svg { display: block; width: 100%; height: 100%; }
+.pcv-banner.size-full { width: 100%; }
+.pcv-banner.size-medium { width: 60%; }
+.pcv-banner.size-small { width: 35%; }
+.pcv-banner.align-center:not(.size-full) { margin-inline: auto; }
+.pcv-banner.align-right:not(.size-full) { margin-left: auto; }
+
+.pcv-steps {
+  list-style: none; padding: 0; margin: 0 0 1rem;
+  display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); row-gap: 1rem !important;
+}
+.pcv-steps li { display: flex; flex-direction: column; align-items: center; gap: 0.35rem; text-align: center; }
+.pcv-steps svg {
+  width: 100%; max-width: 3.25rem; aspect-ratio: 1; padding: 18%;
+  border: 2px dashed #c9b293; border-radius: 50%;
+  fill: transparent; stroke: #c9b293; stroke-width: 1.2;
+  transition: background-color 200ms ease, border-color 200ms ease;
+}
+.pcv-steps li.is-reached svg { background: #3b2a20; border: 2px solid #3b2a20; fill: #e2b23c; stroke: none; }
+.pcv-steps li.has-reward:not(.is-reached) svg { border-style: solid; border-color: #7a5b45; }
+.pcv-steps .pcv-cut { fill: none; stroke: #f6ead8; stroke-width: 1.4; }
+.pcv-steps li:not(.is-reached) .pcv-cut { stroke: #c9b293; }
+.pcv-label { font-size: 0.75rem; line-height: 1.2; min-height: 1.2em; color: #7a5b45; }
+.pcv-steps li.has-reward .pcv-label { font-weight: 700; color: #2a1d15; }
+.pcv-next { margin: 0; font-size: var(--step--1); font-weight: 600; }

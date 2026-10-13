@@ -1,6 +1,7 @@
 ---
 import Base from '../layouts/Base.astro';
 import Hero from '../components/Hero.astro';
+import Career from '../components/Career.astro';
 import { getCollection } from 'astro:content';
 
 const work = (await getCollection('work', ({ data }) => !data.draft))
@@ -8,6 +9,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
 ---
 <Base title="Home">
   <Hero />
+  <Career />
   <section id="work" class="wrap work" aria-labelledby="work-title">
     <h2 id="work-title">Selected work</h2>
     <ul class="work-list">

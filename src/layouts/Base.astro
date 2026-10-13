@@ -1,6 +1,8 @@
 ---
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
+import ContactPanel from '../components/ContactPanel.astro';
+import { contactLinks } from '../data/contact';
 
 interface Props { title: string; description?: string }
 const { title, description = 'Matt Kam — frontend engineer with a design background.' } = Astro.props;
@@ -29,14 +31,15 @@ const fullTitle = title === 'Home' ? 'Matt Kam' : `${title} | Matt Kam`;
     <footer class="site-footer wrap" id="contact">
       <h2>Get in touch</h2>
       <p>
-        <!-- TODO: swap in the address you want public -->
-        <a href="mailto:hello@example.com">hello@example.com</a>
-        <span aria-hidden="true"> / </span>
-        <a href="https://github.com/MatthewKam">GitHub</a>
-        <span aria-hidden="true"> / </span>
-        <a href="https://www.linkedin.com/">LinkedIn</a>
+        {contactLinks.map((l, i) => (
+          <>
+            {i > 0 && <span aria-hidden="true"> / </span>}
+            <a href={l.href} {...(l.external ? { target: '_blank', rel: 'noopener noreferrer' } : {})}>{l.label}</a>
+          </>
+        ))}
       </p>
     </footer>
+    <ContactPanel />
   </body>
 </html>
 

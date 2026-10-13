@@ -10,30 +10,9 @@
 .pc button:disabled { opacity: 0.5; cursor: not-allowed; }
 .pc .pc-quiet { border-color: transparent; text-decoration: underline; padding-inline: 0.4rem; }
 
-.pc-card {
-  background: #3b2a20; color: #f6ead8;
-  border-radius: 18px; padding: clamp(1.25rem, 4vw, 2rem);
-  box-shadow: 0 1px 0 rgba(255,255,255,.08) inset;
-}
-.pc-head { display: flex; justify-content: space-between; align-items: start; gap: 1rem; }
-.pc-brand { margin: 0; font-weight: 700; font-size: var(--step-1); }
-.pc-goal { margin: 0.2rem 0 0; opacity: 0.75; font-size: var(--step--1); }
-.pc-count { margin: 0; font-size: var(--step-2); font-weight: 700; font-variant-numeric: tabular-nums; }
-.pc-punches {
-  list-style: none; padding: 0; margin: 1.75rem 0 1.25rem;
-  display: grid; grid-template-columns: repeat(4, 1fr); gap: clamp(0.6rem, 2vw, 1rem);
-}
-.pc-punches li {
-  aspect-ratio: 1; border-radius: 50%;
-  border: 2px dashed rgba(246, 234, 216, 0.4);
-  transition: background-color 250ms ease, transform 250ms ease;
-}
-.pc-punches li.is-filled {
-  border: 2px solid var(--lamp);
-  background: radial-gradient(circle at 50% 50%, var(--lamp) 0 38%, transparent 40%);
-}
-.pc-carry { margin: 0 0 1rem; font-size: var(--step--1); opacity: 0.85; }
-.pc-actions .pc-primary { background: var(--lamp); color: #2a1d15; border-color: var(--lamp); width: 100%; }
+.pc-carry { margin: 0.75rem 0 0; font-size: var(--step--1); }
+.pc .pc-primary { margin-top: 1rem; width: 100%; background: #3b2a20; color: #f6ead8; border-color: #3b2a20; }
+.pc .pc-primary:hover:not(:disabled) { background: #5a3f2f; }
 
 .pc-controls {
   display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem;

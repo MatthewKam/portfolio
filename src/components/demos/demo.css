@@ -1,0 +1,47 @@
+/* Shared chrome for the demos: buttons, the dashed "demo controls" box, messages. */
+.demo { margin: 2rem 0 3rem; font-family: var(--font-display); }
+@media (min-width: 52rem) {
+  .demo { width: min(calc(72rem - 2 * var(--gutter)), calc(100vw - 2 * var(--gutter))); }
+}
+.demo button {
+  font: inherit; font-weight: 600; cursor: pointer;
+  border: 1px solid var(--ink); background: transparent; color: var(--ink);
+  padding: 0.6rem 1rem; border-radius: 999px; min-height: 44px;
+}
+.demo button:disabled { opacity: 0.5; cursor: not-allowed; }
+.demo .quiet { border-color: transparent; text-decoration: underline; padding-inline: 0.4rem; }
+.demo .primary { background: var(--ink); color: var(--mist); }
+.demo .primary:hover:not(:disabled) { background: var(--pine); border-color: var(--pine); }
+
+.demo input[type='text'], .demo input[type='number'], .demo select, .demo textarea {
+  font: inherit; color: var(--ink); background: var(--mist);
+  border: 1px solid var(--ink-soft); border-radius: 8px; padding: 0.5rem 0.65rem; min-height: 44px;
+}
+.demo input[type='number'] { width: 6.5rem; font-variant-numeric: tabular-nums; }
+
+.demo-controls {
+  display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem 1rem;
+  padding: 1rem; border: 1px dashed var(--ink-soft); border-radius: 12px; margin-bottom: 1.25rem;
+}
+.demo-controls-title { width: 100%; margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+.demo-toggle { display: flex; align-items: center; gap: 0.5rem; font-size: var(--step--1); min-height: 44px; }
+.demo-toggle input { width: 1.1rem; height: 1.1rem; accent-color: var(--pine); }
+
+.demo-msg { margin: 1rem 0 0; padding: 0.75rem 1rem; border-radius: 10px; font-size: var(--step--1); }
+.demo-msg-ok { background: color-mix(in srgb, var(--pine) 15%, transparent); }
+.demo-msg-error { background: color-mix(in srgb, #c0392b 15%, transparent); }
+
+/* The "merchant admin" and "customer storefront" frames. */
+.demo-frame {
+  background: var(--surface); border: 1px solid var(--mist-deep); border-radius: 14px;
+  padding: clamp(1rem, 3vw, 1.75rem);
+}
+.demo-frame-label {
+  margin: 0 0 1rem; font-size: var(--step--1); color: var(--ink-soft);
+  text-transform: uppercase; letter-spacing: 0.08em;
+}
+.demo-shop { background: #f6ead8; color: #2a1d15; border-color: #e3d2b8; }
+.demo-shop .demo-frame-label { color: #7a5b45; }
+.demo-shop button { border-color: #2a1d15; color: #2a1d15; }
+.demo-shop .primary { background: #3b2a20; color: #f6ead8; }
+.demo-shop .primary:hover:not(:disabled) { background: #5a3f2f; border-color: #5a3f2f; }
