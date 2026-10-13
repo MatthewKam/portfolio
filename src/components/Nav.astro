@@ -14,6 +14,11 @@ const links = [
       {links.map((l) => (
         <li><a href={l.href} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a></li>
       ))}
+      <li>
+        <button type="button" class="term-btn" data-term-open aria-label="Terminal mode" title="Terminal mode">
+          <span aria-hidden="true">&gt;_</span>
+        </button>
+      </li>
     </ul>
   </nav>
 </header>
@@ -46,4 +51,17 @@ const links = [
   ul { display: flex; gap: clamp(0.9rem, 3vw, 2rem); list-style: none; margin: 0; padding: 0; }
   ul a { font-family: var(--font-display); font-weight: 500; text-decoration: none; padding: 0.5rem 0; }
   ul a:hover, ul a[aria-current='page'] { text-decoration: underline; }
+  ul { align-items: center; }
+  .term-btn {
+    font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; font-weight: 700; cursor: pointer;
+    min-width: 44px; min-height: 36px; padding: 0 0.6rem; border-radius: 8px;
+    background: var(--ink); color: var(--mist); border: 0;
+  }
+  .term-btn:hover { background: var(--pine); }
+  @media (max-width: 30rem) {
+    ul { gap: 0.8rem; }
+    ul a { font-size: 0.95rem; }
+    .name { font-size: var(--step-0); }
+    .term-btn { min-width: 40px; padding: 0 0.45rem; }
+  }
 </style>

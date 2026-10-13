@@ -1,4 +1,4 @@
-import { useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
+import { useEffect, useRef, useState, type KeyboardEvent, type PointerEvent } from 'react';
 import './charts.css';
 
 /**
@@ -10,7 +10,8 @@ import './charts.css';
 export type Series = { label: string; values: number[] };
 type Fmt = (n: number) => string;
 
-const W = 640;
+// Charts draw at their real pixel width so text stays 11px at any size.
+const DEFAULT_W = 640;
 const H = 240;
 const PAD = { l: 56, r: 16, t: 14, b: 28 };
 
@@ -18,7 +19,21 @@ function niceMax(v: number) {
   if (v <= 0) return 1;
   const p = 10 ** Math.floor(Math.log10(v));
   const n = v / p;
-  return (n <= 1 ? 1 : n <= 2 ? 2 : n <= 2.5 ? 2.5 : n <= 5 ? 5 : 10) * p;
+  const step = [1, 1.5, 2, 2.5, 3, 4, 5, 6, 8, 10].find((m) => n <= m) ?? 10;
+  return step * p;
+}
+
+function useWidth() {
+  const ref = useRef<HTMLDivElement>(null);
+  const [w, setW] = useState(DEFAULT_W);
+  useEffect(() => {
+    const el = ref.current;
+    if (!el) return;
+    const ro = new ResizeObserver(([e]) => setW(Math.max(280, Math.round(e.contentRect.width))));
+    ro.observe(el);
+    return () => ro.disconnect();
+  }, []);
+  return [ref, w] as const;
 }
 
 function Legend({ series }: { series: Series[] }) {
@@ -51,7 +66,7 @@ function TableView({ x, series, fmt, xHead }: { x: string[]; series: Series[]; f
 }
 
 /** Shared hover/keyboard index for charts with one slot per x value. */
-function useSlot(count: number, slotOf: (svgX: number) => number) {
+function useSlot(W: number, count: number, slotOf: (svgX: number) => number) {
   const [i, setI] = useState<number | null>(null);
   const ref = useRef<SVGSVGElement>(null);
   const onMove = (e: PointerEvent<SVGSVGElement>) => {
@@ -76,8 +91,8 @@ function useSlot(count: number, slotOf: (svgX: number) => number) {
   };
 }
 
-function Tooltip({ x, y, title, series, i, fmt, total }: {
-  x: number; y: number; title: string; series: Series[]; i: number; fmt: Fmt; total?: boolean;
+function Tooltip({ W, x, y, title, series, i, fmt, total }: {
+  W: number; x: number; y: number; title: string; series: Series[]; i: number; fmt: Fmt; total?: boolean;
 }) {
   return (
     <div className="ch-tip" role="status" style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }}>
@@ -90,7 +105,7 @@ function Tooltip({ x, y, title, series, i, fmt, total }: {
   );
 }
 
-function YAxis({ max, fmt }: { max: number; fmt: Fmt }) {
+function YAxis({ W, max, fmt }: { W: number; max: number; fmt: Fmt }) {
   const y = (v: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - v / max);
   return (
     <>
@@ -104,25 +119,31 @@ function YAxis({ max, fmt }: { max: number; fmt: Fmt }) {
   );
 }
 
-const showTick = (i: number, n: number) => n <= 8 || i % Math.ceil(n / 6) === 0 || i === n - 1;
+// Label every slot when there's room (~44px each), otherwise every Nth plus the last.
+const showTick = (i: number, n: number, W: number) => {
+  const fit = Math.max(2, Math.floor((W - PAD.l - PAD.r) / 44));
+  const every = Math.ceil(n / fit);
+  return i % every === 0 || (i === n - 1 && (n - 1) % every >= every / 2);
+};
 
 export function LineChart({ title, x, series, fmt, xHead, desc }: {
   title: string; x: string[]; series: Series[]; fmt: Fmt; xHead: string; desc: string;
 }) {
+  const [wrap, W] = useWidth();
   const max = niceMax(Math.max(...series.flatMap((s) => s.values)));
   const step = (W - PAD.l - PAD.r) / Math.max(1, x.length - 1);
   const px = (i: number) => PAD.l + i * step;
   const py = (v: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - v / max);
-  const { i, svgProps } = useSlot(x.length, (sx) => Math.round((sx - PAD.l) / step));
+  const { i, svgProps } = useSlot(W, x.length, (sx) => Math.round((sx - PAD.l) / step));
 
   return (
     <figure className="ch">
       <figcaption>{title}</figcaption>
       <Legend series={series} />
-      <div className="ch-wrap">
+      <div className="ch-wrap" ref={wrap}>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${desc} Use left and right arrow keys to read values.`} {...svgProps}>
-          <YAxis max={max} fmt={fmt} />
-          {x.map((label, k) => showTick(k, x.length) && (
+          <YAxis W={W} max={max} fmt={fmt} />
+          {x.map((label, k) => showTick(k, x.length, W) && (
             <text key={label} x={px(k)} y={H - 8} textAnchor="middle" className="ch-tick">{label}</text>
           ))}
           {i !== null && <line x1={px(i)} x2={px(i)} y1={PAD.t} y2={H - PAD.b} className="ch-cross" />}
@@ -134,7 +155,7 @@ export function LineChart({ title, x, series, fmt, xHead, desc }: {
           ))}
         </svg>
         {i !== null && (
-          <Tooltip x={px(i)} y={Math.min(...series.map((s) => py(s.values[i])))} title={`${xHead} ${x[i]}`} series={series} i={i} fmt={fmt} />
+          <Tooltip W={W} x={px(i)} y={Math.min(...series.map((s) => py(s.values[i])))} title={`${xHead} ${x[i]}`} series={series} i={i} fmt={fmt} />
         )}
       </div>
       <TableView x={x} series={series} fmt={fmt} xHead={xHead} />
@@ -146,11 +167,12 @@ export function StackedBars({ title, x, series, fmt, xHead, desc }: {
   title: string; x: string[]; series: Series[]; fmt: Fmt; xHead: string; desc: string;
 }) {
   const totals = x.map((_, j) => series.reduce((a, s) => a + s.values[j], 0));
+  const [wrap, W] = useWidth();
   const max = niceMax(Math.max(...totals));
   const slot = (W - PAD.l - PAD.r) / x.length;
   const barW = Math.min(34, slot * 0.62);
   const py = (v: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - v / max);
-  const { i, svgProps } = useSlot(x.length, (sx) => Math.floor((sx - PAD.l) / slot));
+  const { i, svgProps } = useSlot(W, x.length, (sx) => Math.floor((sx - PAD.l) / slot));
   const GAP = 2;
   const R = 4;
 
@@ -158,9 +180,9 @@ export function StackedBars({ title, x, series, fmt, xHead, desc }: {
     <figure className="ch">
       <figcaption>{title}</figcaption>
       <Legend series={series} />
-      <div className="ch-wrap">
+      <div className="ch-wrap" ref={wrap}>
         <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${desc} Use left and right arrow keys to read values.`} {...svgProps}>
-          <YAxis max={max} fmt={fmt} />
+          <YAxis W={W} max={max} fmt={fmt} />
           {x.map((label, j) => {
             const bx = PAD.l + j * slot + (slot - barW) / 2;
             let base = py(0);
@@ -183,13 +205,13 @@ export function StackedBars({ title, x, series, fmt, xHead, desc }: {
                     />
                   );
                 })}
-                {showTick(j, x.length) && <text x={bx + barW / 2} y={H - 8} textAnchor="middle" className="ch-tick">{label}</text>}
+                {showTick(j, x.length, W) && <text x={bx + barW / 2} y={H - 8} textAnchor="middle" className="ch-tick">{label}</text>}
               </g>
             );
           })}
         </svg>
         {i !== null && (
-          <Tooltip x={PAD.l + i * slot + slot / 2} y={py(totals[i])} title={`${xHead} ${x[i]}`} series={series} i={i} fmt={fmt} total />
+          <Tooltip W={W} x={PAD.l + i * slot + slot / 2} y={py(totals[i])} title={`${xHead} ${x[i]}`} series={series} i={i} fmt={fmt} total />
         )}
       </div>
       <TableView x={x} series={series} fmt={fmt} xHead={xHead} />

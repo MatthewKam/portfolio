@@ -99,15 +99,16 @@ const statusOf = (v: number): StatusKey => (v >= 0.5 ? 'good' : v >= 0 ? 'warn' 
 
 function Status({ value }: { value: number }) {
   const k = statusOf(value);
-  return <span className={`ad-status ad-${k}`}><span aria-hidden="true">{STATUS[k].icon}</span> {STATUS[k].label}</span>;
+  return <span className={`ad-status ad-${k}`}><span aria-hidden="true">{STATUS[k].icon}</span> <span className="ad-status-label">{STATUS[k].label}</span></span>;
 }
 
 type SortKey = 'client' | 'spend' | 'sales' | 'revenue' | 'return';
-const COLUMNS: { key: SortKey; label: string }[] = [
+// `optional` columns are hidden on narrow screens so Return and status stay visible.
+const COLUMNS: { key: SortKey; label: string; optional?: boolean }[] = [
   { key: 'client', label: 'Client' },
   { key: 'spend', label: 'Spend' },
-  { key: 'sales', label: 'Sales' },
-  { key: 'revenue', label: 'Revenue' },
+  { key: 'sales', label: 'Sales', optional: true },
+  { key: 'revenue', label: 'Revenue', optional: true },
   { key: 'return', label: 'Return' },
 ];
 const PAGE = 10;
@@ -212,7 +213,7 @@ export default function AdDashboard() {
             <thead>
               <tr>
                 {COLUMNS.map((c) => (
-                  <th key={c.key} scope="col" aria-sort={sort.key === c.key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}>
+                  <th key={c.key} scope="col" className={c.optional ? 'ad-opt' : undefined} aria-sort={sort.key === c.key ? (sort.dir === 1 ? 'ascending' : 'descending') : undefined}>
                     <button type="button" onClick={() => sortBy(c.key)}>
                       {c.label}
                       <span aria-hidden="true" className="ad-sort">{sort.key === c.key ? (sort.dir === 1 ? '↑' : '↓') : ''}</span>
@@ -233,8 +234,8 @@ export default function AdDashboard() {
                       </button>
                     </th>
                     <td>{fmt(r.t.spend)}</td>
-                    <td>{r.t.steps[2].toLocaleString('en-US')}</td>
-                    <td>{fmt(r.t.revenue)}</td>
+                    <td className="ad-opt">{r.t.steps[2].toLocaleString('en-US')}</td>
+                    <td className="ad-opt">{fmt(r.t.revenue)}</td>
                     <td>{pct(r.roi)}</td>
                     <td><Status value={r.roi} /></td>
                   </tr>

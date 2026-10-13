@@ -11,7 +11,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
   <Hero />
   <Career />
   <section id="work" class="wrap work" aria-labelledby="work-title">
-    <h2 id="work-title">Selected work</h2>
+    <h2 id="work-title">Selected work<span>(click one to see a demo)</span></h2>
     <ul class="work-list">
       {work.map((item) => (
         <li>
@@ -29,6 +29,7 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
 <style>
   .work { padding-top: 5rem; scroll-margin-top: 4rem; }
   .work > h2 { font-size: var(--step-3); margin-bottom: 1.5rem; }
+  .work > h2 span { font-size: var(--step-0); margin-left: 10px; font-weight:normal;}
   .work-list { list-style: none; margin: 0; padding: 0; border-top: 1px solid var(--mist-deep); }
   .work-list li { border-bottom: 1px solid var(--mist-deep); }
   .work-list a {

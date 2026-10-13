@@ -2,6 +2,7 @@
 import '../styles/global.css';
 import Nav from '../components/Nav.astro';
 import ContactPanel from '../components/ContactPanel.astro';
+import Terminal from '../components/Terminal.astro';
 import { contactLinks } from '../data/contact';
 
 interface Props { title: string; description?: string }
@@ -40,6 +41,7 @@ const fullTitle = title === 'Home' ? 'Matt Kam' : `${title} | Matt Kam`;
       </p>
     </footer>
     <ContactPanel />
+    <Terminal />
   </body>
 </html>
 
