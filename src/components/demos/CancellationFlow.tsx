@@ -6,8 +6,9 @@ import './CancellationFlow.css';
 
 /**
  * Cancellation flow demo for Loam Coffee Co. (fictional brand, fake data).
- * The customer gives a reason, gets one offer that fits it, and can take
- * the offer or keep cancelling. Rules modeled here:
+ * The customer gives a reason, gets one offer that fits it (a discount, a free
+ * gift, a less frequent schedule, or delaying or skipping their next order), and
+ * can take the offer or keep cancelling. Rules modeled here:
  *  - Each reason maps to exactly one offer; "something else" gets none.
  *  - Prices are set per currency by the merchant, never converted on the fly.
  *  - Money and dates are formatted in the shopper's locale.
@@ -15,18 +16,20 @@ import './CancellationFlow.css';
  */
 
 type Step = 'manage' | 'reason' | 'offer' | 'confirm' | 'saved' | 'cancelled';
-type ReasonId = 'price' | 'too-much' | 'away' | 'taste' | 'other';
+type ReasonId = 'price' | 'too-much' | 'too-soon' | 'away' | 'taste' | 'other';
 type Offer =
   | { kind: 'discount'; percent: number; orders: number }
+  | { kind: 'gift'; item: string }
   | { kind: 'frequency'; weeks: number }
-  | { kind: 'skip' }
-  | { kind: 'swap' };
+  | { kind: 'delay'; weeks: number }
+  | { kind: 'skip' };
 
 const REASONS: { id: ReasonId; label: string; offer: Offer | null }[] = [
   { id: 'price', label: "It's too expensive", offer: { kind: 'discount', percent: 20, orders: 3 } },
   { id: 'too-much', label: 'I have too much coffee', offer: { kind: 'frequency', weeks: 4 } },
+  { id: 'too-soon', label: 'My next bag is coming too soon', offer: { kind: 'delay', weeks: 1 } },
   { id: 'away', label: "I'm traveling or away", offer: { kind: 'skip' } },
-  { id: 'taste', label: "I don't love this roast", offer: { kind: 'swap' } },
+  { id: 'taste', label: "I'm bored of the same coffee", offer: { kind: 'gift', item: 'Roaster’s sampler' } },
   { id: 'other', label: 'Something else', offer: null },
 ];
 
@@ -38,14 +41,17 @@ const PRICES: Record<string, Record<Currency, number>> = {
 };
 const PRODUCTS = Object.keys(PRICES);
 
-const START = { product: PRODUCTS[0], weeks: 2, next: new Date(2026, 9, 24), discount: null as null | { percent: number; orders: number } };
+const START = {
+  product: PRODUCTS[0], weeks: 2, next: new Date(2026, 9, 24),
+  discount: null as null | { percent: number; orders: number },
+  gift: null as null | string,
+};
 
 export default function CancellationFlow() {
   const [locale, setLocale] = useState(LOCALES[0]);
   const [sub, setSub] = useState(START);
   const [step, setStep] = useState<Step>('manage');
   const [reason, setReason] = useState<ReasonId | null>(null);
-  const [swapTo, setSwapTo] = useState(PRODUCTS[1]);
   const [note, setNote] = useState('');
   const [pending, setPending] = useState<string | null>(null);
   const [failNext, setFailNext] = useState(false);
@@ -86,9 +92,10 @@ export default function CancellationFlow() {
       setSub((s) => {
         switch (offer.kind) {
           case 'discount': return { ...s, discount: { percent: offer.percent, orders: offer.orders } };
+          case 'gift': return { ...s, gift: offer.item };
           case 'frequency': return { ...s, weeks: offer.weeks };
+          case 'delay': return { ...s, next: addDays(s.next, offer.weeks * 7) };
           case 'skip': return { ...s, next: addDays(s.next, s.weeks * 7) };
-          case 'swap': return { ...s, product: swapTo };
         }
       });
       setStep('saved');
@@ -119,23 +126,31 @@ export default function CancellationFlow() {
           body: `${fmtMoney(discounted(base, offer.percent))} instead of ${fmtMoney(base)} per bag, then back to the regular price.`,
           cta: `Keep it for ${fmtMoney(discounted(base, offer.percent))}`,
         };
+      case 'gift':
+        return {
+          title: 'Have a free sampler on us',
+          body: `We'll add a ${offer.item} (three small bags of our other roasts) to your ${fmtDate(sub.next)} delivery, free.`,
+          cta: 'Add my free sampler',
+        };
       case 'frequency':
         return {
           title: `Get a bag every ${offer.weeks} weeks instead`,
-          body: `Same coffee, half as often. Your next bag still arrives ${fmtDate(sub.next)}.`,
+          body: `Same coffee, less often. Your next bag still arrives ${fmtDate(sub.next)}, then every ${offer.weeks} weeks after that.`,
           cta: `Switch to every ${offer.weeks} weeks`,
         };
+      case 'delay': {
+        const later = addDays(sub.next, offer.weeks * 7);
+        return {
+          title: `Push your next bag back ${offer.weeks === 1 ? 'a week' : `${offer.weeks} weeks`}`,
+          body: `It would arrive ${fmtDate(later)} instead of ${fmtDate(sub.next)}, then carry on every ${sub.weeks} weeks as usual.`,
+          cta: `Delay to ${fmtDate(later)}`,
+        };
+      }
       case 'skip':
         return {
           title: 'Skip your next delivery',
           body: `We'll hold off on ${fmtDate(sub.next)} and send the following one on ${fmtDate(addDays(sub.next, sub.weeks * 7))}.`,
           cta: 'Skip one delivery',
-        };
-      case 'swap':
-        return {
-          title: 'Try a different roast',
-          body: 'Pick another coffee for your next bag. You can switch back any time.',
-          cta: `Switch to ${swapTo.split(',')[0]}`,
         };
     }
   }
@@ -152,7 +167,7 @@ export default function CancellationFlow() {
               <dl className="cf-sub">
                 <div><dt>Coffee</dt><dd>{sub.product}</dd></div>
                 <div><dt>Every</dt><dd>{sub.weeks} weeks</dd></div>
-                <div><dt>Next bag</dt><dd>{fmtDate(sub.next)}</dd></div>
+                <div><dt>Next bag</dt><dd>{fmtDate(sub.next)}{sub.gift && <small> + free {sub.gift}</small>}</dd></div>
                 <div>
                   <dt>Price</dt>
                   <dd>
@@ -192,16 +207,6 @@ export default function CancellationFlow() {
                 <p className="cf-eyebrow">Because you said: {chosen.label.toLowerCase()}</p>
                 <h4>{copy.title}</h4>
                 <p>{copy.body}</p>
-                {chosen.offer.kind === 'swap' && (
-                  <label className="cf-swap">
-                    Coffee
-                    <select value={swapTo} onChange={(e) => setSwapTo(e.target.value)}>
-                      {PRODUCTS.filter((p) => p !== sub.product).map((p) => (
-                        <option key={p} value={p}>{p}, {fmtMoney(price(p))}</option>
-                      ))}
-                    </select>
-                  </label>
-                )}
                 <div className="cf-actions">
                   <button type="button" className="primary" onClick={acceptOffer} disabled={pending !== null}>
                     {pending ? 'Saving…' : copy.cta}
@@ -236,7 +241,10 @@ export default function CancellationFlow() {
           {step === 'saved' && (
             <div className="cf-step" role="status">
               <h4>You're all set</h4>
-              <p>Your subscription is updated. Next bag: {sub.product.split(',')[0]} on {fmtDate(sub.next)}, {fmtMoney(unitPrice)}.</p>
+              <p>
+                Your subscription is updated. Next bag: {sub.product.split(',')[0]} on {fmtDate(sub.next)}, {fmtMoney(unitPrice)}
+                {sub.gift ? `, with a free ${sub.gift}.` : '.'}
+              </p>
               <button type="button" onClick={() => setStep('manage')}>Back to subscription</button>
             </div>
           )}

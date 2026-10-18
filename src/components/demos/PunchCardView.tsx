@@ -36,6 +36,14 @@ export const ICONS: Record<Icon, { label: string; svg: ReactNode }> = {
 export default function PunchCardView({
   design: d, reached, busy, children,
 }: { design: Design; reached: number; busy?: boolean; children?: ReactNode }) {
+  if (!d.showCard) {
+    return (
+      <div className="pcv-hidden" role="note">
+        <strong>Punch card hidden</strong>
+        <span>The merchant turned the card off. Punches still count; customers just don't see the card.</span>
+      </div>
+    );
+  }
   const done = reached >= STEPS;
   const next = REWARD_STEPS.find((n) => n > reached);
   const left = next ? next - reached : 0;

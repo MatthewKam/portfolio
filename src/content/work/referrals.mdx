@@ -1,6 +1,6 @@
 ---
 title: Referrals & rewards
-summary: A referral program merchants configure in minutes, with store credit set per currency and a landing page that updates as they type.
+summary: Merchants could build referral and rewards programs but couldn't see how they performed. I added simpler page setup and analytics right on the program lists.
 company: Recharge
 role: Frontend engineer, rewards & loyalty
 years: "2022–2026"
@@ -8,9 +8,10 @@ stack: [React, TypeScript]
 order: 3
 recreation: true
 ---
-import Referrals from '../../components/demos/Referrals.tsx';
-import ReferralAnalytics from '../../components/demos/ReferralAnalytics.tsx';
-import RewardsAnalytics from '../../components/demos/RewardsAnalytics.tsx';
+
+import Referrals from "../../components/demos/Referrals.tsx";
+import ReferralAnalytics from "../../components/demos/ReferralAnalytics.tsx";
+import RewardsAnalytics from "../../components/demos/RewardsAnalytics.tsx";
 
 ## Try it
 
@@ -21,31 +22,35 @@ shopper's country to see the credit in their currency.
 
 ## Referral performance
 
-Merchants need to know whether the program pays for itself. This page shows referral revenue,
-referred orders and rewards given, with each month split by whether the friend bought once or
-started a subscription. Hover or use the arrow keys on the chart to read a month.
+Merchants need to know whether a program pays for itself. These analytics sat on the referrals
+list: referral revenue, referred orders and rewards given, with each month split by whether the
+friend bought once or started a subscription. Hover or use the arrow keys on the chart to read
+a month.
 
 <ReferralAnalytics client:visible />
 
 ## Rewards performance
 
-Credit only matters if customers come back to use it. This page compares what rewards members
-spend over their first twelve orders against everyone else, and tracks credit from issued to
-redeemed, expired or still owed.
+Credit only matters if customers come back to use it. On the rewards list, merchants could
+compare what rewards members spend over their first twelve orders against everyone else, and
+track credit from issued to redeemed, expired or still owed.
 
 <RewardsAnalytics client:visible />
 
 ## The problem
 
-{/* TODO (interview) */}
-Placeholder.
+Merchants could create rewards and referral programs and add them to customer journeys in the
+canvas view, but once a program was live they couldn't see how it was doing outside of a sales bump. Nothing showed the results visually, so they had no data to make educated decisions with.
 
 ## What I did
 
-{/* TODO (interview) */}
-Placeholder.
+Working with a designer, I added two things. First, a simpler way to build the pages customers
+see: rewards landing pages and referral link pages. Second, analytics on the rewards and
+referral list pages, so merchants could see how each program was performing at a glance.
 
 ## Result
 
-{/* TODO (interview) */}
-Placeholder.
+Merchants could finally see what their programs were doing. Instead of judging a reward or
+referral by whether sales bumped, they could check the numbers right from the list, spot which
+programs were paying off, and adjust the ones that weren't. The simpler page setup made it
+quicker to get a new landing page or referral link live.

@@ -1,6 +1,6 @@
 ---
 title: Cancellation prevention
-summary: A branching flow that meets customers at the moment they try to cancel, with an offer that fits their reason.
+summary: Six months untangling a buggy cancellation-prevention flow, until merchant complaints dropped 80% and the rest were feature requests.
 company: Recharge
 role: Frontend engineer, rewards & loyalty
 years: "2022–2026"
@@ -20,20 +20,30 @@ country to check prices and dates in their currency and format.
 
 ## The problem
 
-{/* TODO (interview) */}
-Placeholder.
+When a customer went to cancel a subscription, they landed on a page that started a
+cancellation-prevention flow. It asked a series of questions, and based on the answers the
+merchant could offer a discount, a free gift, a less frequent delivery schedule, or the option
+to delay or skip their next order.
+
+The idea was sound, but the product was a mess. Merchants were reporting bugs constantly: what
+they built in the landing page builder didn't always match what customers saw on the live
+site, dates and numbers sometimes didn't line up, and some flows worked on the legacy customer
+portal but broke on the new one.
 
 ## What I did
 
-{/* TODO (interview) */}
-Placeholder.
+I spent almost six months on bug duty for cancellation prevention. I worked through the
+reports merchants sent in, tracked down the cause of each one and fixed it, cleaning up the
+experience as I went.
 
 ## The hard part
 
-{/* TODO (interview) */}
-Placeholder.
+There were three versions of the truth: the builder preview, the legacy customer portal and
+the new one. A flow could look right in the builder and be wrong on the live site, or work in
+one portal and fail in the other, so I had to hunt down every place they diverged and make
+them behave the same.
 
 ## Result
 
-{/* TODO (interview) */}
-Placeholder.
+Merchant complaints about cancellation prevention dropped by 80%. The ones that remained
+weren't about bugs; they were requests for more features.

@@ -22,6 +22,14 @@ export default function PunchCardDesigner() {
         <p className="demo-frame-label">Merchant admin · Punch card design</p>
 
         <fieldset>
+          <legend>Customer portal</legend>
+          <label className="demo-toggle">
+            <input type="checkbox" checked={d.showCard} onChange={(e) => set('showCard', e.target.checked)} />
+            Show the punch card in the customer portal
+          </label>
+        </fieldset>
+
+        <fieldset>
           <legend>Text</legend>
           <label>Heading<input type="text" value={d.heading} onChange={(e) => set('heading', e.target.value)} /></label>
           <label>Description<textarea rows={2} value={d.description} onChange={(e) => set('description', e.target.value)} /></label>

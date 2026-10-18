@@ -10,6 +10,8 @@ export type Icon = 'dot' | 'bean' | 'cup' | 'star' | 'percent' | 'money' | 'gift
 export const STEP_ICONS: Icon[] = ['dot', 'bean', 'cup', 'star'];
 export const REWARD_ICONS: Icon[] = ['star', 'percent', 'money', 'gift'];
 export type Design = {
+  /** Show the card in the customer portal. Off hides the UI; punches still count. */
+  showCard: boolean;
   heading: string;
   description: string;
   complete: string;
@@ -30,6 +32,7 @@ export const STEPS = 8;
 export const REWARD_STEPS = [4, 8];
 
 export const DEFAULT_DESIGN: Design = {
+  showCard: true,
   heading: 'Loam Rewards',
   description: 'Eight bags, then one on us. Rewards unlock automatically.',
   complete: 'Your free bag is ready. Thanks for drinking Loam!',

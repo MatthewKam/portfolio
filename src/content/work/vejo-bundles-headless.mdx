@@ -1,6 +1,6 @@
 ---
 title: Bundles and Flutter app optimization
-summary: Product bundles on a headless Shopify store, built to work inside the Flutter app.
+summary: Build-your-own pod bundles shipped in two weeks, and a Flutter app that went from an 8-second to a 3-second first load.
 company: Vejo
 role: Front End Engineer → Senior
 years: "2020–2022"
@@ -9,40 +9,59 @@ order: 4
 recreation: true
 ---
 
-import BundleBuilder from '../../components/demos/BundleBuilder.tsx';
+import BundleBuilder from "../../components/demos/BundleBuilder.tsx";
 
 ## Try it
 
-Pick a bundle size, then fill it right there or keep shopping: every coffee's page can add
-to the open bundle, and the bar at the bottom follows you until it's full and goes in the
-cart. Fill a bundle completely to see the offer to size up. Reload the page mid-bundle and
-it's still there. Pick a few pods, then drop to a
-smaller size to see how the bundle handles it.
+Pick a bundle size, then fill it here or keep shopping: every product page can add to the open
+bundle, and the bar at the bottom follows you until the bundle is full and goes in the cart.
+Fill one completely to see the offer to size up. Reload mid-bundle and it's still there, or
+pick a few pods and drop to a smaller size to see how the bundle handles it.
 
-{/* TODO: confirm pricing. Per-pod prices here are invented. */}
 <BundleBuilder client:idle />
 
 ## The problem
 
-{/* TODO (interview Q1): What did customers or the business need from bundles? Why headless, and why inside the Flutter app? */}
-Placeholder.
+Vejo wanted one central app where customers could track how many blender pods they used and
+manage their subscriptions. The bigger vision was social: a place where customers could
+recommend blends to each other and share ways to get more out of their Vejo.
+
+Bundles were part of that. The goal was to give customers the best price while letting them
+try different blends, building a monthly box that arrived at their door. Neither Shopify nor
+our subscription provider supported bundles at the time, so we decided to build them
+ourselves.
 
 ## Constraints
 
-{/* TODO (interview Q2): Shopify limits, app/web parity, deadlines, team size? */}
-Placeholder.
+The team was one junior full-stack developer and me on the frontend. Sales were declining, and
+the CEO and product team wanted bundles live in two weeks as part of a push to win customers
+back.
 
 ## What I did
 
-{/* TODO (interview Q3): Your concrete decisions and what you personally built. */}
-Placeholder.
+We met as a team to flesh out the idea and check technical feasibility. I worked with the CEO,
+CTO, product and design to agree on the timeline and what we'd deliver, then mapped out the
+work with the junior developer so the schedule was realistic.
+
+On the frontend, I architected bundles so they persisted across every view, even after a page
+refresh, and made sure every case was accounted for.
 
 ## The hard part
 
-{/* TODO (interview Q4): Syncing cart state between web and app, inventory, performance? */}
-Placeholder.
+Keeping the cart in sync. A bundle could change from the builder, from any product page or
+from the cart, and every view had to show the same, correct state through re-renders and
+reloads.
 
 ## Result
 
-{/* TODO (interview Q5): Conversion, average order value, load-time gains (resume says page load scores up 50%+). */}
-Placeholder.
+Sales rose 10%, and long-time customers started buying in bulk. Bundles also gave customers an
+easy way to try new flavors, and the flexibility to change their bundle every month to suit
+what they wanted.
+
+## Flutter app performance
+
+Alongside bundles, I worked on the Flutter app's performance. The slowdown came from leftovers:
+the app was still firing a stack of API calls for older products that no longer worked, and
+loading libraries that weren't used anymore, and every load paid for them. I tracked down
+those leaks and removed them, and initial render in the mobile app went from 8 seconds to 3,
+about 60% faster.

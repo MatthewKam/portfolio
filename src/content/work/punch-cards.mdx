@@ -1,6 +1,6 @@
 ---
 title: Punch cards
-summary: A loyalty program for subscription merchants, scoped to a one-week first version and phased from there.
+summary: A loyalty punch card whose first version shipped in a week. It became our base rewards flow, and merchants adopted it right away.
 company: Recharge
 role: Frontend lead, rewards & loyalty
 years: "2022–2026"
@@ -8,47 +8,55 @@ stack: [React, Vue, TypeScript]
 order: 1
 recreation: true
 ---
-import PunchCard from '../../components/demos/PunchCard.tsx';
-import PunchCardDesigner from '../../components/demos/PunchCardDesigner.tsx';
+
+import PunchCard from "../../components/demos/PunchCard.tsx";
+import PunchCardDesigner from "../../components/demos/PunchCardDesigner.tsx";
 
 ## Try it
 
 This is the card as a customer sees it in their account. Place a few orders, redeem the
-reward, then refund an order to see how the card responds.
-Flip on "Make the next request fail" to see the error state.
+reward, then refund an order to see how the card responds. Flip on "Make the next request
+fail" to see the error state.
 
 <PunchCard client:idle />
 
 ## Make it theirs
 
-Merchants style the card from a form beside a live preview: copy, step icons, a banner,
-spacing, and whether steps without a reward show their order number. Drag "Orders placed"
-to watch the card fill, and switch to Phone to see the narrow layout.
+Merchants style the card from a form beside a live preview: copy, reward text and icons, step
+icons, a banner, spacing, and whether steps without a reward show their order number. They can
+also hide the card from the customer portal entirely. Every change applies to the card in Try
+it above, too. Drag "Orders placed" to watch the card fill, and switch to Phone to see the
+narrow layout.
 
 <PunchCardDesigner client:visible />
 
 ## The problem
 
-{/* TODO (interview Q1): Why did Recharge build punch cards? Merchant ask, retention goal, competitor gap? */}
-Placeholder: what merchants needed and why it mattered.
+Punch cards came from three directions at once. Merchants were asking for a simple loyalty
+program. Retention mattered too: a card that fills with every order gives subscribers a reason
+to stay for the next one. And a competitor already had it. Our CEO saw punch cards as a feature
+we were missing, one that could help us beat them and bring in revenue of our own.
 
 ## Constraints
 
-{/* TODO (interview Q2): Why one week? What got cut, what got phased in later? */}
-Placeholder: the one-week first version and what was deliberately left out.
+The urgency was mostly self-imposed: we felt we were falling behind, and the CEO wanted
+something in merchants' hands fast. That set the timeline: one week for the first version.
 
 ## What I did
 
-{/* TODO (interview Q3): Your concrete decisions and what you personally built. */}
-I led the team on punch cards, scoping a one-week first version across backend, product,
-design and frontend, then phasing the rest.
+We sat down with product, design and backend to agree on the end goal, what was realistic in a
+week, and who would own what, so we used the time well. I built the merchant-facing form, the
+experience builder with its live preview, and the integration with the flow canvas, where
+merchants add punch cards to their customer journeys.
 
 ## The hard part
 
-{/* TODO (interview Q4): Refunds, skipped orders, cancellations, cross-team tension? */}
-Placeholder: the edge case or decision that took the most thought.
+Building the experience builder from the designs was only half the job. The customer portal
+lived in a separate application, so every change a merchant made in the builder had to show
+up there exactly as previewed. On top of that came the edge cases we had to talk through and
+iron out: refunds, finished punch cards, and customers with more than one card.
 
 ## Result
 
-{/* TODO (interview Q5): Adoption, retention, revenue or merchant feedback. Relative numbers are fine. */}
-Placeholder: what changed after launch.
+Punch cards became our base rewards flow, with a setting to show or hide the punch card UI for
+merchants who didn't want it. Adoption was immediate, and merchants loved it.
