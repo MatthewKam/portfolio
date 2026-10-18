@@ -64,7 +64,7 @@ export const roles: Role[] = [
     start: '2014-11',
     end: '2019-10',
     kind: 'job',
-    summary: 'Advertiser dashboards and branded Shopify storefronts.',
+    summary: 'Affiliate performance dashboards, PHP sales funnels and branded Shopify storefronts.',
     highlights: [
       'Developed internal React dashboards and led UX/UI design for advertiser-facing tools.',
       'Built a custom Shopify theme for the branded division; clients included Playboy and Bulletproof Coffee.',

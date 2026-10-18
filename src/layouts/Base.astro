@@ -16,6 +16,12 @@ const fullTitle = title === 'Home' ? 'Matt Kam' : `${title} | Matt Kam`;
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <title>{fullTitle}</title>
     <meta name="description" content={description} />
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <meta property="og:type" content="website" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta name="theme-color" content="#e4eaec" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#121a2b" media="(prefers-color-scheme: dark)" />
     <link rel="preconnect" href="https://fonts.googleapis.com" />
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
     <link

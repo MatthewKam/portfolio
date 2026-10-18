@@ -1,0 +1,17 @@
+---
+import Base from '../layouts/Base.astro';
+---
+<Base title="Page not found">
+  <section class="wrap missing">
+    <h1>Lost in the hills</h1>
+    <p>That page doesn't exist, or it moved.</p>
+    <p class="links"><a href="/">Back to the home page</a> <span aria-hidden="true">·</span> <a href="/#work">See the work</a></p>
+  </section>
+</Base>
+
+<style>
+  .missing { padding-block: clamp(4rem, 14vh, 8rem); }
+  h1 { font-size: var(--step-5); letter-spacing: -0.03em; }
+  p { font-size: var(--step-1); color: var(--ink-soft); }
+  .links { font-family: var(--font-display); font-weight: 600; color: var(--ink); }
+</style>
