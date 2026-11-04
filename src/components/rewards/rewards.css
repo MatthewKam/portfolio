@@ -660,12 +660,34 @@
 	}
 }
 
-/* On wide screens the intro and the card sit side by side under the headline. */
+/* On wide screens the card sits on the left; the intro, status and buttons
+   stack on the right, so that column reads as one block beside the card. */
 @media (min-width: 60rem) {
 	.rw-head {
-		grid-template-columns: minmax(0, 1fr) minmax(0, 31rem);
+		grid-template-columns: minmax(0, 31rem) minmax(0, 1fr);
+		grid-template-rows: auto 1fr;
+		grid-template-areas:
+			"card intro"
+			"card actions";
 		align-items: start;
-		gap: 3rem;
+		gap: 2rem 3rem;
+	}
+	.rw-hold {
+		display: contents;
+	}
+	.rw-intro {
+		grid-area: intro;
+	}
+	.rw-stage {
+		grid-area: card;
+	}
+	.rw-actions {
+		grid-area: actions;
+		justify-items: start;
+		text-align: left;
+	}
+	.rw-actions .rw-progress {
+		max-width: 30ch;
 	}
 	.rw-card {
 		width: 100%;

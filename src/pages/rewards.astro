@@ -32,7 +32,7 @@ const fmt = (ym: string) => new Date(`${ym}-01T12:00:00`).toLocaleDateString('en
 
     <Rewards client:load work={work}>
       <p class="rp-lede">
-        I build loyalty programs for a living, so this portfolio is one. Open the work, collect stamps,
+        I built loyalty programs for a living, so this portfolio is one. Open the work, collect stamps,
         unlock the good stuff.
       </p>
     </Rewards>
@@ -83,6 +83,12 @@ const fmt = (ym: string) => new Date(`${ym}-01T12:00:00`).toLocaleDateString('en
   }
   h1 span { display: block; color: transparent; -webkit-text-stroke: 2px var(--ink); }
   .rp-lede { font-family: var(--font-body); margin: 0.4rem 0 0; font-size: var(--step-1); max-width: 36ch; color: var(--ink-soft); }
+  /* Tablet and below (until the card moves beside the intro, at 60rem in rewards.css): the headline
+     and intro center over the card, which is centered already. */
+  @media (max-width: 59.99rem) {
+    .rp-hero { text-align: center; justify-items: center; }
+    .rp-lede { text-align: center; margin-inline: auto; }
+  }
 
   .rp-statement h2 { font-size: var(--step-4); text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 0.3em; }
   .rp-sub { color: var(--ink-soft); margin: 0 0 1.5rem; }

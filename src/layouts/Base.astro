@@ -76,6 +76,21 @@ const canonical = new URL(Astro.url.pathname.replace(/(.)\/$/, '$1'), Astro.site
   </body>
 </html>
 
+<script>
+  // Links that leave the site, and the résumé PDF, open in a new tab. Done at click time so it
+  // also covers links rendered later by islands (rewards card, terminal, live panels).
+  document.addEventListener('click', (e) => {
+    const a = (e.target as Element | null)?.closest?.('a[href]') as HTMLAnchorElement | null;
+    if (!a || a.target || a.hasAttribute('download')) return;
+    const url = new URL(a.href, location.href);
+    if (!/^https?:$/.test(url.protocol)) return;
+    if (url.origin !== location.origin || /\.pdf$/i.test(url.pathname)) {
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+    }
+  });
+</script>
+
 <style>
   .site-footer { margin-top: 6rem; overflow: hidden; }
   /* Never shorter than the drawing's own ratio, so wide screens don't crop the sun and hilltops;

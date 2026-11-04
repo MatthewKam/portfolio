@@ -106,7 +106,7 @@ const rects = bars.map((w, i) => { const r = { x, w, on: i % 2 === 0 }; x += w; 
 
       <footer class="center" id="about">
         <p class="rc-gap">THANK YOU FOR YOUR VISIT</p>
-        <p>NOW HIRING: ME</p>
+        <p>NOW ACCEPTING OFFERS</p>
         <a class="barcode" href="https://www.linkedin.com/in/mattkam/" aria-label="Contact Matt on LinkedIn">
           <svg viewBox={`0 0 ${x} 40`} preserveAspectRatio="none" aria-hidden="true">
             {rects.filter((r) => r.on).map((r) => <rect x={r.x} y="0" width={r.w} height="40" />)}
