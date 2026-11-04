@@ -1,0 +1,61 @@
+---
+/**
+ * On a case study page: if the visitor has joined the rewards program, this
+ * stamps their card and says so. Visitors who haven't joined see nothing.
+ */
+interface Props { slug: string }
+const { slug } = Astro.props;
+---
+<div class="sov" data-stamp={slug} role="status" hidden>
+  <span class="sov-mark" aria-hidden="true">★</span>
+  <span data-sov-text></span>
+  <a href="/rewards">See your card</a>
+</div>
+
+<script>
+  // Same key and shape as components/rewards/membership.ts.
+  const KEY = 'rewards-membership';
+  const box = document.querySelector<HTMLElement>('[data-stamp]');
+  try {
+    const raw = localStorage.getItem(KEY);
+    const m = raw && JSON.parse(raw);
+    const slug = box?.dataset.stamp;
+    if (m && slug && box) {
+      const isNew = !m.stamps.includes(slug);
+      if (isNew) {
+        m.stamps.push(slug);
+        localStorage.setItem(KEY, JSON.stringify(m));
+      }
+      // Older cards may still hold the retired referral stamp; it doesn't count.
+      const count = m.stamps.filter((s: string) => s !== 'referral').length;
+      const full = count >= 5;
+      box.querySelector('[data-sov-text]')!.textContent = isNew
+        ? (full ? 'Card complete!' : `Stamp earned. ${count} of 5.`)
+        : `Already stamped. ${count} of 5.`;
+      if (isNew && full) box.querySelector('a')!.textContent = 'Claim your reward';
+      box.hidden = false;
+    }
+  } catch {
+    // No storage, no card: nothing to show.
+  }
+</script>
+
+<style>
+  .sov {
+    position: fixed; right: max(1rem, env(safe-area-inset-right)); bottom: max(1rem, env(safe-area-inset-bottom)); z-index: 40;
+    display: flex; align-items: center; gap: 0.7rem;
+    font-family: var(--font-display); font-size: var(--step--1);
+    background: #123a2e; color: #f2e8d2; padding: 0.7rem 1rem 0.7rem 0.8rem; border-radius: 999px;
+    box-shadow: 0 12px 30px -10px rgba(6, 22, 17, 0.6);
+    animation: sov-in 0.5s cubic-bezier(.3, 1.4, .5, 1) 0.4s both;
+  }
+  .sov[hidden] { display: none; }
+  .sov-mark {
+    width: 1.8rem; height: 1.8rem; border-radius: 50%; display: grid; place-items: center;
+    background: #f2e8d2; color: #c2321f; font-size: 1rem;
+  }
+  .sov a { color: #d9a93f; font-weight: 600; }
+  .sov a:hover { color: #f2e8d2; }
+  @keyframes sov-in { from { transform: translateY(1.5rem) scale(0.9); opacity: 0; } }
+  @media (prefers-reduced-motion: reduce) { .sov { animation: none; } }
+</style>

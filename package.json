@@ -6,7 +6,8 @@
   "scripts": {
     "dev": "astro dev",
     "build": "astro build",
-    "preview": "astro preview"
+    "preview": "astro preview",
+    "data:datacenters": "node scripts/update-datacenters.mjs"
   },
   "dependencies": {
     "@astrojs/mdx": "8.0.3",

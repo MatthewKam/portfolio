@@ -1,0 +1,192 @@
+/* The rewards view has its own palette: a members' club in forest, cream and gold. */
+.rw {
+  --rw-card: #123a2e;
+  --rw-card-deep: #0b271f;
+  --rw-cream: #f2e8d2;
+  --rw-gold: #d9a93f;
+  --rw-ink: #c2321f; /* stamp ink, always on cream */
+  --rw-accent: #b02a18; /* the same red as text on the page */
+  display: grid; gap: clamp(3rem, 8vw, 6rem);
+  font-family: var(--font-display);
+}
+@media (prefers-color-scheme: dark) {
+  .rw { --rw-accent: #ff8a6b; }
+}
+
+/* ---- The card ------------------------------------------------------------ */
+.rw-head { display: grid; gap: 2.5rem; }
+.rw-hold { display: grid; gap: 1.6rem; }
+.rw-stage { perspective: 1400px; display: grid; justify-items: center; }
+.rw-card {
+  --rx: 0deg; --ry: 0deg; --mx: 50%; --my: 30%;
+  position: relative; width: min(34rem, 100%); aspect-ratio: 1.586;
+  transform: rotateX(var(--rx)) rotateY(calc(var(--ry) + var(--flip, 0deg)));
+  transform-style: preserve-3d;
+  transition: transform 0.5s cubic-bezier(.2, .7, .2, 1);
+}
+.rw-card.is-flipped { --flip: 180deg; }
+.rw-card.is-loading { opacity: 0; }
+.rw-face {
+  position: absolute; inset: 0; border-radius: clamp(14px, 3vw, 22px); overflow: hidden;
+  backface-visibility: hidden; -webkit-backface-visibility: hidden;
+  background:
+    radial-gradient(120% 90% at 0% 0%, color-mix(in srgb, var(--rw-gold) 18%, transparent), transparent 60%),
+    linear-gradient(150deg, var(--rw-card), var(--rw-card-deep));
+  color: var(--rw-cream);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.12) inset, 0 30px 60px -20px rgba(6, 22, 17, 0.55), 0 8px 18px -8px rgba(6, 22, 17, 0.4);
+  padding: clamp(1rem, 4.2%, 1.6rem);
+  display: grid; grid-template-rows: auto 1fr auto;
+}
+.rw-back { transform: rotateY(180deg); grid-template-rows: auto 1fr auto; gap: 0.6rem; pointer-events: none; }
+/* Only the face toward the visitor takes clicks (the contact links live on the front). */
+.rw-card.is-flipped .rw-front { pointer-events: none; }
+.rw-card.is-flipped .rw-back { pointer-events: auto; }
+
+/* Foil: a moving highlight that follows the pointer, brighter at higher tiers. */
+.rw-foil {
+  position: absolute; inset: 0; pointer-events: none; mix-blend-mode: color-dodge; opacity: var(--foil, 0.35);
+  background:
+    radial-gradient(40% 55% at var(--mx) var(--my), rgba(255, 236, 190, 0.55), transparent 70%),
+    repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, 0.05) 14px 15px);
+}
+.rw[data-tier='silver'] .rw-foil { --foil: 0.55; }
+.rw[data-tier='gold'] .rw-foil {
+  --foil: 0.8;
+  background:
+    radial-gradient(45% 60% at var(--mx) var(--my), rgba(255, 220, 140, 0.8), transparent 70%),
+    conic-gradient(from 200deg at var(--mx) var(--my), #d9a93f33, #8ee3c633, #e7a0d633, #d9a93f33);
+}
+
+.rw-top { display: flex; justify-content: space-between; align-items: start; position: relative; }
+.rw-brand { font-weight: 700; font-size: clamp(1rem, 4.4vw, 1.5rem); line-height: 0.95; letter-spacing: -0.02em; text-transform: uppercase; }
+.rw-tier {
+  font-size: 0.72rem; font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase;
+  padding: 0.3rem 0.65rem; border-radius: 999px; border: 1px solid color-mix(in srgb, var(--rw-gold) 70%, transparent); color: var(--rw-gold);
+}
+.rw[data-tier='gold'] .rw-tier { background: var(--rw-gold); color: var(--rw-card-deep); }
+
+/* The cream panel stamps land on. */
+.rw-slots {
+  list-style: none; margin: clamp(0.5rem, 3%, 1rem) 0; padding: clamp(0.4rem, 2.5%, 0.8rem);
+  display: grid; grid-template-columns: repeat(5, 1fr); gap: clamp(0.25rem, 1.6%, 0.6rem); align-items: center;
+  background: var(--rw-cream); border-radius: 12px; position: relative;
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+}
+.rw-slot {
+  aspect-ratio: 1; border-radius: 50%; display: grid; place-items: center;
+  border: 1.5px dashed color-mix(in srgb, var(--rw-card) 35%, transparent);
+}
+.rw-empty { font: 600 clamp(0.6rem, 2.2vw, 0.8rem) ui-monospace, 'SF Mono', Menlo, monospace; color: color-mix(in srgb, var(--rw-card) 45%, transparent); }
+/* A completed card: the stamp panel becomes contact details. */
+.rw-contact {
+  margin: clamp(0.5rem, 3%, 1rem) 0; padding: clamp(0.6rem, 3.5%, 1.1rem) clamp(0.8rem, 4%, 1.3rem);
+  background: var(--rw-cream); color: var(--rw-card-deep); border-radius: 12px; position: relative;
+  display: grid; align-content: center; gap: clamp(0.2rem, 1.5%, 0.5rem);
+  box-shadow: 0 0 0 1px rgba(0, 0, 0, 0.08) inset;
+  animation: rw-reveal 0.7s cubic-bezier(.3, 1.4, .5, 1) both;
+}
+.rw-contact p { margin: 0; }
+.rw-contact-kicker { font-size: clamp(0.55rem, 1.9vw, 0.7rem); font-weight: 700; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rw-ink); }
+.rw-contact-title { font-size: clamp(1.3rem, 6vw, 2.2rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1; }
+.rw-contact ul { list-style: none; margin: 0; padding: 0; display: flex; flex-wrap: wrap; gap: clamp(0.25rem, 1.4%, 0.5rem); }
+.rw-contact a {
+  display: inline-block; font-size: clamp(0.7rem, 2.6vw, 0.9rem); font-weight: 600; text-decoration: none;
+  color: var(--rw-cream); background: var(--rw-card); padding: 0.35em 0.85em; border-radius: 999px;
+}
+.rw-contact a:hover { background: var(--rw-ink); color: #fff8ec; }
+@keyframes rw-reveal { from { transform: rotateX(80deg) scale(0.9); opacity: 0; } }
+
+.rw-bottom { display: flex; gap: 2rem; position: relative; font-variant-numeric: tabular-nums; }
+.rw-bottom span { display: grid; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: clamp(0.8rem, 3vw, 1.05rem); letter-spacing: 0.08em; }
+.rw-bottom small { font-family: var(--font-display); font-size: 0.62rem; letter-spacing: 0.14em; text-transform: uppercase; opacity: 0.65; }
+
+.rw-back dl { margin: 0; display: grid; gap: 0.6rem; align-content: center; }
+.rw-back dt { font-size: 0.7rem; letter-spacing: 0.14em; text-transform: uppercase; color: var(--rw-gold); }
+.rw-back dd { margin: 0; font-size: clamp(1rem, 3.6vw, 1.3rem); font-weight: 600; }
+.rw-back p { margin: 0; font-size: 0.7rem; opacity: 0.6; }
+.rw-strip { height: clamp(1.6rem, 12%, 2.6rem); margin-inline: calc(-1 * clamp(1rem, 4.2%, 1.6rem)); background: #050f0c; }
+
+/* ---- Stamps -------------------------------------------------------------- */
+.rw-stamp { width: 112%; height: 112%; transform: rotate(var(--a)); overflow: visible; }
+.rw-ring { fill: none; stroke: var(--rw-ink); stroke-width: 4; }
+.rw-rim { fill: var(--rw-ink); font: 700 11.5px var(--font-display); letter-spacing: 1.2px; }
+.rw-star { fill: var(--rw-ink); }
+.rw-stamp g { opacity: 0.88; mix-blend-mode: multiply; }
+.rw-stamp.is-new { animation: rw-slam 0.42s cubic-bezier(.3, 1.6, .5, 1) var(--d) both; }
+@keyframes rw-slam {
+  0% { transform: rotate(calc(var(--a) - 18deg)) scale(2.4); opacity: 0; }
+  60% { opacity: 1; }
+  100% { transform: rotate(var(--a)) scale(1); opacity: 1; }
+}
+.rw-card:has(.rw-stamp.is-new) { animation: rw-thud 0.42s ease-out calc(var(--first, 0.35s) + 0.2s) both; }
+@keyframes rw-thud { 40% { translate: 0 3px; } }
+
+/* ---- Under the card ------------------------------------------------------ */
+.rw-actions { display: grid; justify-items: center; gap: 0.8rem; text-align: center; }
+.rw-actions .rw-small { max-width: 28ch; }
+.rw-join {
+  font: 700 var(--step-1) var(--font-display); letter-spacing: -0.01em;
+  background: var(--rw-ink); color: #fff8ec; border: 0; border-radius: 999px; padding: 0.9rem 2rem; cursor: pointer;
+  box-shadow: 0 6px 0 #8c2215; transition: transform 0.12s, box-shadow 0.12s;
+}
+.rw-join:hover { transform: translateY(-2px); box-shadow: 0 8px 0 #8c2215; }
+.rw-join:active { transform: translateY(4px); box-shadow: 0 2px 0 #8c2215; }
+.rw-small { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+.rw-progress { margin: 0; font-size: var(--step-1); }
+.rw-tools { display: flex; gap: 0.5rem; }
+.rw-tools button, .rw-leave {
+  font: 600 var(--step--1) var(--font-display); color: var(--ink); background: none; cursor: pointer;
+  border: 1px solid color-mix(in srgb, var(--ink) 30%, transparent); border-radius: 999px; padding: 0.4rem 0.9rem;
+}
+.rw-tools button:hover, .rw-leave:hover { border-color: var(--ink); }
+
+.rw h2 { font-size: var(--step-4); text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 0.3em; }
+.rw-lede { font-family: var(--font-body); color: var(--ink-soft); margin: 0 0 1.5rem; max-width: 46ch; }
+
+.rw-list { list-style: none; margin: 0; padding: 0; border-top: 2px solid var(--ink); }
+.rw-list li { border-bottom: 1px solid color-mix(in srgb, var(--ink) 20%, transparent); }
+.rw-list a {
+  display: grid; grid-template-columns: 3rem 1fr auto; gap: 1rem; align-items: center;
+  padding: 1.25rem 0; text-decoration: none;
+}
+.rw-n { font-family: ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink-soft); }
+.rw-what { display: grid; gap: 0.15rem; }
+.rw-what strong { font-size: var(--step-2); letter-spacing: -0.015em; line-height: 1.1; }
+.rw-what span { color: var(--ink-soft); font-size: var(--step--1); }
+.rw-pts {
+  font: 700 var(--step--1) var(--font-display); white-space: nowrap; letter-spacing: 0.04em; text-transform: uppercase;
+  padding: 0.45rem 0.9rem; border-radius: 999px; border: 1.5px solid var(--rw-accent); color: var(--rw-accent); background: none;
+}
+.rw-list a:hover .rw-pts:not(.is-got) { background: var(--rw-accent); color: var(--mist); border-color: var(--rw-accent); }
+.rw-pts.is-got { border-color: transparent; background: color-mix(in srgb, var(--pine) 16%, transparent); color: var(--pine); }
+.rw-list a:hover strong { color: var(--pine); }
+
+.rw-rewards ul { list-style: none; margin: 0 0 1.5rem; padding: 0; display: grid; gap: 1rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+.rw-rewards li {
+  display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: start;
+  padding: 1.25rem; border-radius: 16px; border: 1.5px dashed color-mix(in srgb, var(--ink) 30%, transparent);
+}
+.rw-rewards li.is-open { border-style: solid; border-color: var(--rw-gold); background: color-mix(in srgb, var(--rw-gold) 10%, transparent); }
+.rw-rewards li div { display: grid; gap: 0.3rem; }
+.rw-rewards strong { font-size: var(--step-1); }
+.rw-rewards li span, .rw-rewards li a { font-family: var(--font-body); color: var(--ink-soft); }
+.rw-rewards li a { color: var(--ink); }
+.rw-at {
+  width: 2.6rem; height: 2.6rem; border-radius: 50%; display: grid; place-items: center;
+  font-weight: 700; background: var(--ink); color: var(--mist);
+}
+.rw-rewards .is-open .rw-at { background: var(--rw-gold); color: var(--rw-card-deep); }
+
+/* On wide screens the intro and the card sit side by side under the headline. */
+@media (min-width: 60rem) {
+  .rw-head { grid-template-columns: minmax(0, 1fr) minmax(0, 31rem); align-items: start; gap: 3rem; }
+  .rw-card { width: 100%; }
+}
+@media (max-width: 34rem) {
+  .rw-list a { grid-template-columns: 1fr auto; }
+  .rw-n { display: none; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .rw-card { transition: none; }
+  .rw-stamp.is-new, .rw-card:has(.rw-stamp.is-new), .rw-contact { animation: none; }
+}

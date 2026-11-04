@@ -151,7 +151,7 @@ const data = {
       whoami: {
         help: 'who is Matt',
         run: () => print(
-          [hi('Matt Kam'), ' · frontend engineer · Torrance, CA'],
+          [hi('Matt Kam'), ' · frontend engineer · Los Angeles, CA'],
           ['Twelve years building interfaces people pay for. Engineer with a design eye,'],
           ['most recently rewards and loyalty at Recharge (TypeScript, React, Vue).'],
         ),
@@ -198,6 +198,23 @@ const data = {
           session.open = false;
           save();
           location.href = `/work/${w.slug}`;
+        },
+      },
+      live: {
+        help: 'dashboards running on real-time public data',
+        run: () => {
+          print([dim('opened '), hi('Live data'), dim('. Press >_ to come back here.')]);
+          session.open = false;
+          save();
+          location.href = '/live';
+        },
+      },
+      xray: {
+        help: 'see the blueprint behind the page (or hold X)',
+        run: () => {
+          print([dim('x-ray on. Hover anything; press '), cmd('Esc'), dim(' to turn it off.')]);
+          close();
+          dispatchEvent(new Event('xray:toggle'));
         },
       },
       skills: {

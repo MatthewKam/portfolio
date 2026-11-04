@@ -1,0 +1,36 @@
+---
+import Base from '../layouts/Base.astro';
+import LiveTabs from '../components/live/LiveTabs.tsx';
+---
+<Base title="Live data" description="Data visualizations running on real public data that changes while you watch.">
+  <div class="wrap live">
+    <header>
+      <h1>Live data</h1>
+      <p class="lede">
+        Dashboards are at their hardest when the numbers won't sit still. Everything here is real
+        public data, with no fake numbers to fall back on.
+      </p>
+    </header>
+    <LiveTabs client:load />
+    <details class="notes">
+      <summary>How it holds up</summary>
+      <p>
+        Each source sets its own pace: a stream of edits every second, weather readings every 15
+        minutes, storm alerts as they're issued, and data center research as it's published. Each tab
+        loads when opened, checks only as often as its source can change, and stops when closed.
+      </p>
+      <p>
+        When a refresh fails, the last good data stays up and the panel says how old it is. Every
+        chart can also be read with a keyboard or as a table, and color is never the only signal.
+      </p>
+    </details>
+  </div>
+</Base>
+
+<style>
+  .live { padding-top: 3rem; }
+  h1 { font-size: var(--step-5); letter-spacing: -0.03em; }
+  .lede { font-size: var(--step-1); line-height: 1.4; max-width: 44ch; color: var(--ink-soft); margin: 0 0 2rem; }
+  .notes { margin-top: 2rem; max-width: var(--measure); }
+  .notes summary { cursor: pointer; font-family: var(--font-display); font-weight: 600; min-height: 44px; display: flex; align-items: center; }
+</style>

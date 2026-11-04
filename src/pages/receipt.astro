@@ -1,0 +1,233 @@
+---
+/**
+ * Receipt view: the career, itemized. A printer is pinned to the bottom of the
+ * window and the receipt feeds out of it as you scroll. Prints for real, too.
+ */
+import Base from '../layouts/Base.astro';
+import { getCollection } from 'astro:content';
+import { roles, skills } from '../data/career';
+
+const work = (await getCollection('work', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
+
+// Short receipt-width versions of the highlights in data/career.ts.
+const MODS: Record<string, string[]> = {
+  recharge: ['Punch cards, end to end', 'Cancellation prevention', 'Digital subscriptions', 'Failed payment recovery', 'Referrals, credits & rewards'],
+  vejo: ['Page load scores up 50%+', 'Shopify sales funnels', 'Liquid/SCSS component library'],
+  'ad-exchange': ['Promoted to senior', 'React dashboards + UX/UI', 'Shopify theme for Playboy,', '  Bulletproof Coffee', 'Led junior developers'],
+  freelance: ['Shopify, WordPress, Wix', 'Responsive + SEO'],
+  'general-assembly': ['12 weeks, full time'],
+};
+
+const months = (start: string, end: string | null) => {
+  const [y1, m1] = start.split('-').map(Number);
+  const [y2, m2] = (end ?? new Date().toISOString().slice(0, 7)).split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1) + 1;
+};
+const jobs = roles.filter((r) => r.kind === 'job').map((r) => ({ ...r, months: months(r.start, r.end) }));
+const extras = roles.filter((r) => r.kind !== 'job');
+const total = jobs.reduce((n, r) => n + r.months, 0);
+const yrs = (m: number) => `${(m / 12).toFixed(1)} YR`;
+const today = new Date();
+const stamp = today.toLocaleDateString('en-US', { month: '2-digit', day: '2-digit', year: 'numeric' });
+
+// A decorative barcode drawn from the site's address: same text, same bars.
+const bars = Array.from('mattkam.dev/contact').flatMap((c) => {
+  const n = c.charCodeAt(0);
+  return [1 + (n % 3), 1 + ((n >> 2) % 2), 1 + ((n >> 3) % 3), 1 + ((n >> 1) % 2)];
+});
+let x = 0;
+const rects = bars.map((w, i) => { const r = { x, w, on: i % 2 === 0 }; x += w; return r; });
+---
+<Base title="Receipt" description="Matt Kam's career, itemized on a till receipt." showFooter={false}>
+  <div class="rc">
+    <p class="rc-hint" aria-hidden="true">Scroll to print ↓</p>
+
+    <article class="paper" aria-label="Receipt" data-x="receipt.astro › paper">
+      <header class="center">
+        <h1>MATT KAM</h1>
+        <p>FRONTEND ENGINEERING CO.</p>
+        <p>SANTA MONICA, CA</p>
+        <p class="rc-gap">SINCE 2014 · OPEN LATE</p>
+      </header>
+
+      <dl class="meta">
+        <div><dt>DATE</dt><dd>{stamp}</dd></div>
+        <div><dt>ORDER</dt><dd>#{total}-{work.length}</dd></div>
+        <div><dt>CASHIER</dt><dd>MATT</dd></div>
+        <div><dt>GUEST</dt><dd>YOU</dd></div>
+      </dl>
+
+      <h2 id="experience">EXPERIENCE</h2>
+      <ul class="items">
+        {jobs.map((r) => (
+          <li>
+            <p class="row"><span>1 × {r.company.replace(/,? Inc\.$/, '').toUpperCase()}</span><span class="dots" /><span>{yrs(r.months)}</span></p>
+            <p class="sub">{r.title.toUpperCase()}</p>
+            {MODS[r.id]?.map((m) => <p class="mod">{m.startsWith(' ') ? '  ' + m.trim().toUpperCase() : `+ ${m.toUpperCase()}`}</p>)}
+          </li>
+        ))}
+      </ul>
+
+      <h2 id="work">SIDES (TAP TO OPEN)</h2>
+      <ul class="items">
+        {work.map((w) => (
+          <li>
+            <a class="row" href={`/work/${w.id}`}><span>1 × {w.data.title.toUpperCase()}</span><span class="dots" /><span>DEMO →</span></a>
+          </li>
+        ))}
+      </ul>
+
+      <h2>ON THE HOUSE</h2>
+      <ul class="items">
+        {extras.map((r) => (
+          <li>
+            <p class="row"><span>1 × {r.company.toUpperCase()}</span><span class="dots" /><span>0.00</span></p>
+            {MODS[r.id]?.map((m) => <p class="mod">+ {m.toUpperCase()}</p>)}
+          </li>
+        ))}
+        <li>
+          <p class="row"><span>{Object.values(skills).flat().length} × SKILLS</span><span class="dots" /><span>INCL.</span></p>
+          <p class="mod wrapline">{Object.values(skills).flat().join(' · ').toUpperCase()}</p>
+        </li>
+      </ul>
+
+      <div class="totals">
+        <p class="row"><span>SUBTOTAL</span><span class="dots" /><span>{total} MO</span></p>
+        <p class="row"><span>COFFEE</span><span class="dots" /><span>UNCOUNTED</span></p>
+        <p class="row"><span>MEETINGS THAT COULD'VE BEEN EMAILS</span><span class="dots" /><span>-0.0</span></p>
+        <p class="row total"><span>TOTAL</span><span class="dots" /><span>{(total / 12).toFixed(1)} YRS</span></p>
+        <p class="row"><span>PAID WITH</span><span class="dots" /><span>CURIOSITY</span></p>
+      </div>
+
+      <footer class="center" id="about">
+        <p class="rc-gap">THANK YOU FOR YOUR VISIT</p>
+        <p>NOW HIRING: ME</p>
+        <a class="barcode" href="https://www.linkedin.com/in/mattkam/" aria-label="Contact Matt on LinkedIn">
+          <svg viewBox={`0 0 ${x} 40`} preserveAspectRatio="none" aria-hidden="true">
+            {rects.filter((r) => r.on).map((r) => <rect x={r.x} y="0" width={r.w} height="40" />)}
+          </svg>
+          <span>TAP TO CONTACT</span>
+        </a>
+        <p class="rc-links">
+          <a href="/resume.pdf">RÉSUMÉ PDF</a> · <a href="https://github.com/MatthewKam">GITHUB</a> · <a href="/">HOME</a>
+        </p>
+        <p class="rc-copy">*** CUSTOMER COPY ***</p>
+      </footer>
+    </article>
+
+    <div class="printer" aria-hidden="true">
+      <div class="slot"></div>
+      <div class="body"><span class="led"></span><span class="brand">MK-2014</span></div>
+    </div>
+
+    <p class="rc-tools"><button type="button" data-print>Print a copy</button></p>
+  </div>
+</Base>
+
+<script>
+  document.querySelector('[data-print]')?.addEventListener('click', () => print());
+</script>
+
+<style>
+  .rc {
+    --paper: #fbf8f1;
+    --print: #1d1d1f;
+    --printer: #2b2f36;
+    display: grid; justify-items: center; padding: 1rem var(--gutter) 0;
+    font-family: ui-monospace, 'SF Mono', 'JetBrains Mono', Menlo, monospace;
+  }
+  .rc-hint {
+    position: sticky; top: 45svh; margin: 0; height: 0; overflow: visible; z-index: 0;
+    font-family: var(--font-display); font-size: var(--step--1); letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+  }
+
+  /* The paper starts tucked into the printer and feeds out as the page scrolls. */
+  .paper {
+    position: relative; z-index: 1; width: min(25rem, 100%); margin-top: 72svh;
+    background: var(--paper); color: var(--print); padding: 2rem 1.4rem 2.5rem;
+    font-size: 0.82rem; line-height: 1.55; letter-spacing: 0.02em;
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.06), 0 10px 30px -12px rgba(0, 0, 0, 0.25);
+  }
+  /* torn top edge */
+  .paper::before {
+    content: ""; position: absolute; left: 0; right: 0; top: -8px; height: 8px;
+    background: linear-gradient(-45deg, var(--paper) 6px, transparent 0), linear-gradient(45deg, var(--paper) 6px, transparent 0);
+    background-size: 12px 8px; background-position: left bottom; background-repeat: repeat-x;
+  }
+  .paper p { margin: 0; }
+  .center { text-align: center; }
+  h1 { font-family: inherit; font-size: 1.7rem; font-weight: 800; letter-spacing: 0.08em; margin: 0 0 0.3rem; }
+  h2 {
+    font-family: inherit; font-size: 0.82rem; font-weight: 700; letter-spacing: 0.12em; margin: 1.4rem 0 0.5rem;
+    padding-top: 1rem; border-top: 1.5px dashed currentColor;
+  }
+  .rc-gap { margin-top: 0.8rem !important; }
+  .meta { display: grid; grid-template-columns: 1fr 1fr; gap: 0 1rem; margin: 1.4rem 0 0; padding-top: 1rem; border-top: 1.5px dashed currentColor; }
+  .meta div { display: flex; justify-content: space-between; }
+  .meta dd { margin: 0; }
+  .items { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.7rem; }
+  .row { display: flex; align-items: baseline; gap: 0.4rem; color: inherit; text-decoration: none; }
+  .row > span:first-child { min-width: 0; }
+  .dots { flex: 1; min-width: 1rem; border-bottom: 1.5px dotted currentColor; opacity: 0.45; transform: translateY(-0.25em); }
+  .row > span:last-child { white-space: nowrap; font-weight: 700; }
+  a.row:hover > span:first-child { text-decoration: underline; }
+  .sub, .mod { padding-left: 1.6em; }
+  .sub { font-weight: 700; font-size: 0.74rem; }
+  .mod { opacity: 0.78; }
+  .wrapline { font-size: 0.72rem; line-height: 1.6; }
+  .totals { margin-top: 1.4rem; padding-top: 1rem; border-top: 1.5px dashed currentColor; display: grid; gap: 0.2rem; }
+  .total { font-size: 1.15rem; font-weight: 800; margin: 0.4rem 0 !important; padding: 0.4rem 0; border-block: 3px double currentColor; }
+  footer { margin-top: 1.6rem; padding-top: 1rem; border-top: 1.5px dashed currentColor; }
+  .barcode { display: grid; justify-items: center; gap: 0.3rem; margin: 1.2rem auto 0.8rem; color: inherit; text-decoration: none; width: 80%; }
+  .barcode svg { width: 100%; height: 3.4rem; fill: currentColor; }
+  .barcode span { font-size: 0.7rem; letter-spacing: 0.3em; }
+  .barcode:hover span { text-decoration: underline; }
+  .rc-links a { color: inherit; }
+  .rc-copy { margin-top: 1rem !important; letter-spacing: 0.1em; }
+
+  /* Thermal ink: each line darkens as it clears the printer's slot. */
+  @supports (animation-timeline: view()) {
+    @media (prefers-reduced-motion: no-preference) {
+      .paper :is(header p, h1, h2, .meta div, .row, .sub, .mod, footer > *) {
+        animation: ink linear both;
+        animation-timeline: view(block 0px 7.5rem);
+        animation-range: entry 0% entry 100%;
+      }
+    }
+  }
+  @keyframes ink { from { opacity: 0.08; filter: blur(0.6px); } }
+
+  /* The printer is pinned to the bottom of the window until the receipt has fed all the way out. */
+  .printer { position: sticky; bottom: 0; z-index: 2; width: min(30rem, 100%); margin-top: -1.2rem; }
+  .slot {
+    height: 1.2rem; margin-inline: 1.2rem; border-radius: 6px 6px 0 0;
+    background: linear-gradient(#0d0f12, #22262c); box-shadow: 0 -2px 0 rgba(255, 255, 255, 0.05) inset;
+  }
+  .body {
+    height: 6.3rem; border-radius: 18px 18px 0 0; background: linear-gradient(180deg, #3a3f47, var(--printer) 30%, #1f2228);
+    display: flex; align-items: center; justify-content: space-between; padding: 0 1.6rem;
+    box-shadow: 0 -10px 30px -10px rgba(0, 0, 0, 0.35);
+  }
+  .led { width: 0.55rem; height: 0.55rem; border-radius: 50%; background: #5be07a; box-shadow: 0 0 10px #5be07a; }
+  .brand { font-family: var(--font-display); font-weight: 700; letter-spacing: 0.3em; font-size: 0.72rem; color: #8a919c; }
+  .rc-tools { margin: 0; padding: 1.2rem 0 2.5rem; display: flex; justify-content: center; background: #1f2228; width: min(30rem, 100%); }
+  .rc-tools button {
+    font: 600 var(--step--1) var(--font-display); color: #f4f1ea; background: none; cursor: pointer;
+    border: 1px solid rgba(244, 241, 234, 0.4); border-radius: 999px; padding: 0.5rem 1.1rem;
+  }
+  .rc-tools button:hover { border-color: #f4f1ea; }
+
+  /* The paper scrolls up under the nav, so the nav needs a solid backing here. */
+  :global(.nav) { background: var(--mist) !important; opacity: 1 !important; }
+  @media (max-width: 24rem) {
+    .meta { grid-template-columns: 1fr; }
+  }
+
+  @media print {
+    :global(.nav), :global(.skip-link), .rc-hint, .printer, .rc-tools { display: none !important; }
+    :global(body) { background: #fff; }
+    .paper { margin: 0 auto; box-shadow: none; }
+    .paper::before { display: none; }
+    .paper * { animation: none !important; opacity: 1 !important; filter: none !important; }
+  }
+</style>

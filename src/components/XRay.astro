@@ -1,0 +1,209 @@
+---
+/**
+ * X-ray mode. Hold X (or tap the pill) on any page to see the site as its own
+ * blueprint: the layout grid, every box, and for whatever is under the pointer,
+ * its component, size, type and the design tokens it's painted with.
+ */
+const TOKENS = ['--mist', '--mist-deep', '--ink', '--ink-soft', '--pine', '--lamp', '--surface', '--hill-front'];
+const STEPS = ['--step--1', '--step-0', '--step-1', '--step-2', '--step-3', '--step-4', '--step-5'];
+---
+<div class="xr" data-xr aria-hidden="true">
+  <div class="xr-cols" data-xr-cols></div>
+  <div class="xr-margin" data-xr-margin></div>
+  <div class="xr-pad" data-xr-pad></div>
+  <div class="xr-box" data-xr-box></div>
+  <div class="xr-tag" data-xr-tag></div>
+  <aside class="xr-panel">
+    <p class="xr-h">Design tokens</p>
+    <ul class="xr-swatches">
+      {TOKENS.map((t) => <li data-token={t}><i style={`background: var(${t})`} />{t}</li>)}
+    </ul>
+    <p class="xr-h">Type scale · 1.25</p>
+    <ul class="xr-steps">
+      {STEPS.map((t) => <li data-step={t}><span style={`font-size: min(var(${t}), 1.6rem)`}>Aa</span>{t}</li>)}
+    </ul>
+    <p class="xr-note">Release X to go back.</p>
+  </aside>
+</div>
+<button type="button" class="xr-pill" data-xr-pill aria-pressed="false">
+  <span class="xr-key" aria-hidden="true">X</span><span class="xr-label">X-ray</span>
+</button>
+
+<script define:vars={{ TOKENS, STEPS }}>
+  const root = document.documentElement;
+  const layer = document.querySelector('[data-xr]');
+  const pill = document.querySelector('[data-xr-pill]');
+  const cols = layer.querySelector('[data-xr-cols]');
+  const box = layer.querySelector('[data-xr-box]');
+  const pad = layer.querySelector('[data-xr-pad]');
+  const margin = layer.querySelector('[data-xr-margin]');
+  const tag = layer.querySelector('[data-xr-tag]');
+  let on = false;
+  let held = false;
+  let last = null;
+
+  // Token values as the browser resolves them, so a computed colour can be named.
+  const resolve = (list, prop) => {
+    const probe = document.createElement('i');
+    probe.style.position = 'absolute';
+    document.body.append(probe);
+    const map = new Map();
+    for (const t of list) {
+      probe.style.setProperty(prop, `var(${t})`);
+      // Two tokens can share a value (--ink and --hill-front do); the first listed names it.
+      const v = getComputedStyle(probe).getPropertyValue(prop);
+      if (!map.has(v)) map.set(v, t);
+    }
+    probe.remove();
+    return map;
+  };
+  let colors, sizes;
+  const readTokens = () => { colors = resolve(TOKENS, 'color'); sizes = resolve(STEPS, 'font-size'); };
+
+  const placeCols = () => {
+    // The layout grid lives on .wrap: match its content box.
+    const wrap = document.querySelector('main .wrap') ?? document.querySelector('.wrap');
+    if (!wrap) return;
+    const r = wrap.getBoundingClientRect();
+    const cs = getComputedStyle(wrap);
+    const left = r.left + parseFloat(cs.paddingLeft);
+    const width = r.width - parseFloat(cs.paddingLeft) - parseFloat(cs.paddingRight);
+    Object.assign(cols.style, { left: `${left}px`, width: `${width}px` });
+  };
+
+  const set = (el, r) => Object.assign(el.style, { left: `${r.left}px`, top: `${r.top}px`, width: `${Math.max(0, r.width)}px`, height: `${Math.max(0, r.height)}px` });
+  const px = (v) => parseFloat(v) || 0;
+  const label = (el) => {
+    const cls = [...el.classList].filter((c) => !c.startsWith('astro-')).slice(0, 2);
+    return el.tagName.toLowerCase() + (cls.length ? `.${cls.join('.')}` : '');
+  };
+
+  const inspect = (el) => {
+    if (!el || el === last || el.closest('[data-xr], [data-xr-pill]')) return;
+    last = el;
+    const r = el.getBoundingClientRect();
+    const cs = getComputedStyle(el);
+    const p = { t: px(cs.paddingTop), r: px(cs.paddingRight), b: px(cs.paddingBottom), l: px(cs.paddingLeft) };
+    const m = { t: px(cs.marginTop), r: px(cs.marginRight), b: px(cs.marginBottom), l: px(cs.marginLeft) };
+    set(margin, { left: r.left - m.l, top: r.top - m.t, width: r.width + m.l + m.r, height: r.height + m.t + m.b });
+    set(pad, r);
+    set(box, { left: r.left + p.l, top: r.top + p.t, width: r.width - p.l - p.r, height: r.height - p.t - p.b });
+
+    const owner = el.closest('[data-x]')?.dataset.x;
+    const ink = colors.get(cs.color);
+    const bg = colors.get(cs.backgroundColor);
+    const step = sizes.get(cs.fontSize);
+    const family = cs.fontFamily.split(',')[0].replaceAll('"', '');
+    const lines = [
+      `<b>${label(el)}</b> <span>${Math.round(r.width)}×${Math.round(r.height)}</span>`,
+      owner ? `in &lt;${owner}&gt;` : '',
+      `${family} ${cs.fontWeight} · ${Math.round(px(cs.fontSize) * 10) / 10}px${step ? ` <em>var(${step})</em>` : ''}`,
+      `color ${ink ? `<em>var(${ink})</em>` : cs.color === 'rgba(0, 0, 0, 0)' ? 'transparent' : cs.color}`,
+      bg ? `background <em>var(${bg})</em>` : '',
+      p.t + p.r + p.b + p.l ? `padding ${[p.t, p.r, p.b, p.l].map(Math.round).join(' ')}` : '',
+    ].filter(Boolean);
+    tag.innerHTML = lines.join('<br>');
+    const below = r.bottom + 8 + tag.offsetHeight < innerHeight;
+    tag.style.top = `${below ? r.bottom + 8 : Math.max(8, r.top - tag.offsetHeight - 8)}px`;
+    tag.style.left = `${Math.min(Math.max(8, r.left), innerWidth - tag.offsetWidth - 8)}px`;
+
+    layer.querySelectorAll('[data-token]').forEach((li) => li.classList.toggle('is-hit', li.dataset.token === ink || li.dataset.token === bg));
+    layer.querySelectorAll('[data-step]').forEach((li) => li.classList.toggle('is-hit', li.dataset.step === step));
+  };
+
+  const toggle = (next) => {
+    if (next === on) return;
+    on = next;
+    root.classList.toggle('xray', on);
+    pill.setAttribute('aria-pressed', String(on));
+    if (on) { readTokens(); placeCols(); last = null; }
+  };
+
+  const typing = (t) => t instanceof HTMLElement && (t.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(t.tagName) || t.closest('dialog[open]'));
+  addEventListener('keydown', (e) => {
+    if (e.key.toLowerCase() !== 'x' || e.repeat || e.metaKey || e.ctrlKey || e.altKey || typing(e.target)) return;
+    held = true;
+    toggle(true);
+  });
+  addEventListener('keyup', (e) => { if (held && e.key.toLowerCase() === 'x') { held = false; toggle(false); } });
+  addEventListener('keydown', (e) => { if (e.key === 'Escape') toggle(false); });
+  addEventListener('blur', () => { if (held) { held = false; toggle(false); } });
+  pill.addEventListener('click', () => toggle(!on));
+
+  addEventListener('pointermove', (e) => { if (on) inspect(document.elementFromPoint(e.clientX, e.clientY)); }, { passive: true });
+  // Touch has no hover: a tap inspects instead of following the link.
+  addEventListener('click', (e) => {
+    if (!on || e.target.closest('[data-xr-pill]') || matchMedia('(hover: hover)').matches) return;
+    e.preventDefault();
+    last = null;
+    inspect(e.target);
+  }, true);
+  addEventListener('scroll', () => { if (on) { last = null; placeCols(); } }, { passive: true });
+  addEventListener('resize', () => { if (on) placeCols(); });
+  addEventListener('xray:toggle', () => toggle(!on));
+</script>
+
+<style is:global>
+  .xr { display: none; }
+  html.xray .xr { display: block; position: fixed; inset: 0; z-index: 9000; pointer-events: none; }
+  html.xray body {
+    background-image:
+      linear-gradient(color-mix(in srgb, #3b8fd4 10%, transparent) 1px, transparent 1px),
+      linear-gradient(90deg, color-mix(in srgb, #3b8fd4 10%, transparent) 1px, transparent 1px);
+    background-size: 8px 8px;
+  }
+  html.xray body *:not(.xr, .xr *, .xr-pill, .xr-pill *) { outline: 1px solid color-mix(in srgb, #3b8fd4 35%, transparent); outline-offset: -1px; }
+
+  .xr-cols {
+    position: fixed; top: 0; bottom: 0;
+    --g: 1.5rem;
+    background: repeating-linear-gradient(90deg,
+      color-mix(in srgb, #d4692b 10%, transparent) 0 calc((100% - 11 * var(--g)) / 12),
+      transparent calc((100% - 11 * var(--g)) / 12) calc((100% - 11 * var(--g)) / 12 + var(--g)));
+  }
+  .xr-margin, .xr-pad, .xr-box { position: fixed; }
+  .xr-margin { background: rgba(246, 178, 107, 0.28); }
+  .xr-pad { background: rgba(147, 196, 125, 0.4); }
+  .xr-box { background: rgba(111, 168, 220, 0.45); }
+  .xr-tag {
+    position: fixed; max-width: min(24rem, calc(100vw - 16px));
+    font: 500 12px/1.55 ui-monospace, 'SF Mono', Menlo, monospace; color: #e6ecef;
+    background: #0b1120; padding: 0.55rem 0.7rem; border-radius: 8px; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.3);
+  }
+  .xr-tag:empty { display: none; }
+  .xr-tag b { color: #7cc2a8; }
+  .xr-tag span { color: #9aa7bb; }
+  .xr-tag em { font-style: normal; color: #f0c75a; }
+
+  .xr-panel {
+    position: fixed; right: 1rem; bottom: 1rem; width: 15rem;
+    font: 500 11.5px/1.4 ui-monospace, 'SF Mono', Menlo, monospace; color: #e6ecef;
+    background: rgba(11, 17, 32, 0.94); padding: 0.9rem; border-radius: 12px;
+  }
+  .xr-h { margin: 0 0 0.4rem; color: #9aa7bb; letter-spacing: 0.08em; text-transform: uppercase; font-size: 10px; }
+  .xr-panel ul { list-style: none; margin: 0 0 0.8rem; padding: 0; display: grid; gap: 0.2rem; }
+  .xr-panel li { display: flex; align-items: center; gap: 0.5rem; padding: 0.1rem 0.3rem; border-radius: 4px; }
+  .xr-panel li.is-hit { background: rgba(240, 199, 90, 0.2); color: #f0c75a; }
+  .xr-swatches i { width: 0.9rem; height: 0.9rem; border-radius: 3px; box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25); }
+  .xr-steps span { width: 2.4rem; font-family: var(--font-display); line-height: 1; }
+  .xr-note { margin: 0; color: #9aa7bb; }
+  @media (hover: none) { .xr-note { display: none; } }
+  @media (max-width: 40rem) { .xr-panel { display: none; } }
+
+  .xr-pill {
+    position: fixed; left: 1rem; bottom: 1rem; z-index: 9001;
+    display: flex; align-items: center; gap: 0.45rem;
+    font: 600 12px var(--font-display); color: var(--ink); cursor: pointer;
+    background: color-mix(in srgb, var(--surface) 85%, transparent); backdrop-filter: blur(8px); -webkit-backdrop-filter: blur(8px);
+    border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent); border-radius: 999px; padding: 0.3rem 0.75rem 0.3rem 0.3rem;
+    opacity: 0.75; transition: opacity 0.2s;
+  }
+  .xr-pill:hover, .xr-pill[aria-pressed='true'] { opacity: 1; }
+  .xr-key {
+    display: grid; place-items: center; width: 1.5rem; height: 1.5rem; border-radius: 5px;
+    background: var(--ink); color: var(--mist); font: 700 11px ui-monospace, 'SF Mono', Menlo, monospace;
+  }
+  .xr-pill[aria-pressed='true'] .xr-key { background: #3b8fd4; color: #fff; }
+  @media (hover: hover) { .xr-label::before { content: 'Hold X · '; color: var(--ink-soft); font-weight: 500; } }
+  @media print { .xr, .xr-pill { display: none !important; } }
+</style>

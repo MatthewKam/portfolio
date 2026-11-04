@@ -1,18 +1,18 @@
 ---
-/** "Selected work" list, shared by the classic home page and the depth view. */
+/** "Selected work" list, shared by the home page. */
 import { getCollection } from 'astro:content';
 
 const work = (await getCollection('work', ({ data }) => !data.draft))
   .sort((a, b) => a.data.order - b.data.order);
 ---
-<section id="work" class="wrap work" aria-labelledby="work-title">
+<section id="work" class="wrap work" aria-labelledby="work-title" data-x="WorkList.astro">
   <h2 id="work-title">Selected work<span>(click one to see a demo)</span></h2>
   <ul class="work-list">
     {work.map((item) => (
       <li>
         <a href={`/work/${item.id}`}>
           <span class="meta">{item.data.company}, {item.data.years}</span>
-          <span class="title">{item.data.title}</span>
+          <span class="title">{item.data.title}<span class="go" aria-hidden="true">→</span></span>
           <span class="summary">{item.data.summary}</span>
         </a>
       </li>
@@ -40,5 +40,9 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
   .meta { font-family: var(--font-display); color: var(--ink-soft); font-size: var(--step--1); }
   .title { font-family: var(--font-display); font-weight: 600; font-size: var(--step-4); line-height: 1.05; letter-spacing: -0.02em; }
   .summary { max-width: 56ch; color: var(--ink-soft); }
-  .work-list a:hover .title { color: var(--pine); }
+  .work-list a { transition: transform 200ms ease; }
+  .go { display: inline-block; margin-left: 0.35em; font-size: 0.6em; color: var(--lamp); opacity: 0; transform: translateX(-0.4em); transition: opacity 200ms ease, transform 200ms ease; }
+  .work-list a:hover .title, .work-list a:focus-visible .title { color: var(--pine); }
+  .work-list a:hover .go, .work-list a:focus-visible .go { opacity: 1; transform: none; }
+  @media (hover: hover) { .work-list a:hover { transform: translateX(0.4rem); } }
 </style>

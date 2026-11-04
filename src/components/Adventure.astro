@@ -1,0 +1,302 @@
+---
+/**
+ * Choose your own adventure: the first screen of a visit to the home page.
+ * Four ways into the same portfolio. Shown once per browser session, only when
+ * the visit starts at "/"; the inline script in Base.astro decides before paint.
+ */
+---
+<div class="adv" data-adv tabindex="-1" role="dialog" aria-modal="true" aria-labelledby="adv-title" data-x="Adventure.astro">
+  <div class="adv-inner wrap">
+    <header class="adv-head">
+      <p class="adv-kicker">Matt Kam · Frontend engineer</p>
+      <h2 id="adv-title">Choose your<br /><span>own adventure.</span></h2>
+      <p class="adv-sub">Same twelve years of work, four ways in.<span class="adv-keys"> Press 1–4, or pick one.</span></p>
+    </header>
+
+    <ol class="adv-list">
+      <li>
+        <button type="button" class="adv-opt" data-adv-pick="site">
+          <span class="adv-art art-site" aria-hidden="true">
+            <svg viewBox="0 0 200 130" preserveAspectRatio="xMidYMax slice">
+              <circle class="a-sun" cx="148" cy="38" r="16" />
+              <path class="a-h1" d="M-20 80 C 30 64 60 70 92 62 S 150 54 220 66 V140 H-20Z" />
+              <path class="a-h2" d="M-20 96 C 26 86 56 92 86 88 S 150 78 220 90 V140 H-20Z" />
+              <path class="a-h3" d="M-20 114 C 40 106 90 110 130 107 S 190 104 220 108 V140 H-20Z" />
+            </svg>
+          </span>
+          <span class="adv-key" aria-hidden="true">1</span>
+          <span class="adv-text"><strong>The site</strong><span>Fly through the hills, section by section.</span></span>
+        </button>
+      </li>
+      <li>
+        <a class="adv-opt" href="/rewards" data-adv-pick="rewards">
+          <span class="adv-art art-card" aria-hidden="true">
+            <span class="a-card">
+              <span class="a-brand">Matt Kam<br />Rewards</span>
+              <span class="a-slots"><i class="on"></i><i class="on"></i><i class="slam"></i><i></i><i></i></span>
+            </span>
+          </span>
+          <span class="adv-key" aria-hidden="true">2</span>
+          <span class="adv-text"><strong>Punch card</strong><span>Open the work, collect stamps, unlock my contact card.</span></span>
+        </a>
+      </li>
+      <li>
+        <a class="adv-opt" href="/receipt" data-adv-pick="receipt">
+          <span class="adv-art art-receipt" aria-hidden="true">
+            <span class="a-paper">
+              <b>MATT KAM</b>
+              <i style="--w: 80%"></i><i style="--w: 62%"></i><i style="--w: 74%"></i><i style="--w: 50%"></i>
+              <b class="a-total">TOTAL <span>12 YRS</span></b>
+            </span>
+          </span>
+          <span class="adv-key" aria-hidden="true">3</span>
+          <span class="adv-text"><strong>Receipt</strong><span>Twelve years, itemized. Printed as you scroll.</span></span>
+        </a>
+      </li>
+      <li>
+        <button type="button" class="adv-opt" data-adv-pick="terminal" data-term-open>
+          <span class="adv-art art-term" aria-hidden="true">
+            <span class="a-term">
+              <span><em>$</em> whoami</span>
+              <span class="a-dim">Matt Kam · frontend engineer</span>
+              <span><em>$</em> <span class="a-type">work</span><span class="a-caret"></span></span>
+            </span>
+          </span>
+          <span class="adv-key" aria-hidden="true">4</span>
+          <span class="adv-text"><strong>Terminal</strong><span>For people who'd rather type. Try <code>help</code>.</span></span>
+        </button>
+      </li>
+    </ol>
+
+    <p class="adv-foot">You can switch any time from the buttons in the top right.</p>
+  </div>
+</div>
+
+<script>
+  const KEY = 'adventure';
+  const box = document.querySelector<HTMLElement>('[data-adv]');
+  const root = document.documentElement;
+  // Everything behind the chooser stays out of reach while it's up.
+  const behind = () => [document.querySelector('[data-nav]'), ...document.querySelectorAll('#main > :not([data-adv])')];
+
+  // Every tile follows the pointer (--px/--py, 0 to 1); each preview uses it its own way.
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  box?.querySelectorAll<HTMLElement>('.adv-opt').forEach((opt) => {
+    opt.addEventListener('pointermove', (e) => {
+      if (e.pointerType !== 'mouse' || still) return;
+      const r = opt.getBoundingClientRect();
+      opt.style.setProperty('--px', ((e.clientX - r.left) / r.width).toFixed(3));
+      opt.style.setProperty('--py', ((e.clientY - r.top) / r.height).toFixed(3));
+    });
+    opt.addEventListener('pointerleave', () => { opt.style.removeProperty('--px'); opt.style.removeProperty('--py'); });
+  });
+
+  if (box && root.classList.contains('choosing')) {
+    behind().forEach((el) => el?.setAttribute('inert', ''));
+    box.focus({ preventScroll: true }); // The dialog itself, so no tile looks pre-selected.
+
+    const finish = (choice: string) => {
+      try { sessionStorage.setItem(KEY, choice); } catch { /* Shown again next visit; that's fine. */ }
+      behind().forEach((el) => el?.removeAttribute('inert'));
+      removeEventListener('keydown', onKey);
+      root.classList.add('chosen');
+      const done = () => { root.classList.remove('choosing', 'chosen'); box.hidden = true; };
+      if (matchMedia('(prefers-reduced-motion: reduce)').matches) done();
+      else setTimeout(done, 700);
+    };
+
+    box.querySelectorAll<HTMLElement>('[data-adv-pick]').forEach((opt) => {
+      opt.addEventListener('click', () => {
+        const pick = opt.dataset.advPick!;
+        opt.classList.add('is-picked');
+        // Links carry on to their page; the site and the terminal open right here
+        // (the terminal's own button handler opens it on this same click).
+        if (pick === 'site' || pick === 'terminal') finish(pick);
+        else try { sessionStorage.setItem(KEY, pick); } catch { /* Not needed to navigate. */ }
+      });
+    });
+
+    const onKey = (e: KeyboardEvent) => {
+      if (e.metaKey || e.ctrlKey || e.altKey) return;
+      const i = ['1', '2', '3', '4'].indexOf(e.key);
+      if (i >= 0) { e.preventDefault(); box.querySelectorAll<HTMLElement>('[data-adv-pick]')[i].click(); }
+      else if (e.key === 'Escape') finish('site');
+    };
+    addEventListener('keydown', onKey);
+  }
+</script>
+
+<style>
+  /* Hidden unless Base.astro's pre-paint script marked this visit as choosing. */
+  .adv { display: none; }
+  :global(html.choosing) { overflow: hidden; }
+  :global(html.choosing) .adv {
+    display: grid; position: fixed; inset: 0; z-index: 60; overflow-y: auto; overscroll-behavior: contain;
+    background: var(--mist);
+  }
+  /* The curtain lifts on the home page when "The site" (or the terminal) is picked. */
+  :global(html.chosen) .adv { animation: adv-lift 0.7s cubic-bezier(.7, 0, .2, 1) both; pointer-events: none; }
+  @keyframes adv-lift { to { transform: translateY(-100%); } }
+
+  .adv-inner { width: 100%; align-self: center; padding-block: clamp(1.5rem, 5vh, 3.5rem); display: grid; gap: clamp(1.5rem, 4vh, 3rem); }
+  .adv-kicker {
+    margin: 0 0 0.8rem; font-family: var(--font-display); font-weight: 600; font-size: var(--step--1);
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  .adv h2 { margin: 0; font-size: clamp(2.6rem, 8.5vw, 7.5rem); line-height: 0.88; letter-spacing: -0.05em; font-weight: 700; }
+  .adv h2 span { color: transparent; -webkit-text-stroke: 2px var(--ink); }
+  .adv:focus { outline: none; }
+  .adv-sub { margin: 1rem 0 0; font-size: var(--step-1); color: var(--ink-soft); max-width: 40ch; }
+
+  .adv-list { list-style: none; margin: 0; padding: 0; display: grid; gap: clamp(0.75rem, 1.5vw, 1.25rem); grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .adv-opt {
+    --px: 0.5; --py: 0.5; /* Pointer position over the tile, set by the script. */
+    position: relative; width: 100%; height: 100%; display: grid; grid-template-rows: auto 1fr; gap: 1rem;
+    padding: 0.75rem 0.75rem 1.1rem; text-align: left; font: inherit; color: var(--ink); text-decoration: none;
+    background: var(--surface); border: 1.5px solid color-mix(in srgb, var(--ink) 14%, transparent); border-radius: 20px; cursor: pointer;
+    transition: transform 0.5s cubic-bezier(.2, .7, .2, 1), border-color 0.2s, box-shadow 0.35s;
+  }
+  /* The rewards card's tilt (rewards.css): each tile leans toward the pointer, with foil
+     that follows it. --px/--py rest at the centre, so leaving settles the tile flat. */
+  .adv-list > li { perspective: 1100px; }
+  .adv-opt::after {
+    content: ''; position: absolute; inset: 0; border-radius: inherit; pointer-events: none; z-index: 2;
+    opacity: 0; transition: opacity 0.3s;
+    background:
+      radial-gradient(40% 55% at calc(var(--px) * 100%) calc(var(--py) * 100%), rgba(255, 246, 222, 0.42), transparent 70%),
+      repeating-linear-gradient(115deg, transparent 0 14px, rgba(255, 255, 255, 0.07) 14px 15px);
+  }
+  .adv-opt:hover {
+    transform: rotateX(calc((0.5 - var(--py)) * 12deg)) rotateY(calc((var(--px) - 0.5) * 16deg)) scale(1.02);
+    border-color: var(--ink);
+    box-shadow: calc((0.5 - var(--px)) * 24px) calc(24px + (0.5 - var(--py)) * 16px) 40px -22px color-mix(in srgb, var(--ink) 55%, transparent);
+  }
+  .adv-opt:hover::after { opacity: 1; }
+  .adv-opt:focus-visible { transform: translateY(-6px); border-color: var(--ink); }
+  .adv-opt:focus-visible { outline: 3px solid var(--pine); outline-offset: 3px; }
+  .adv-opt.is-picked { transform: scale(0.97); border-color: var(--pine); }
+  .adv-key {
+    position: absolute; top: 1.2rem; right: 1.2rem; z-index: 1; width: 1.8rem; height: 1.8rem; display: grid; place-items: center;
+    font: 700 0.8rem ui-monospace, 'SF Mono', Menlo, monospace; border-radius: 8px;
+    background: var(--surface); color: var(--ink); border: 1px solid color-mix(in srgb, var(--ink) 25%, transparent);
+  }
+  .adv-text { display: grid; gap: 0.35rem; padding-inline: 0.4rem; align-content: start; }
+  .adv-text strong { font-family: var(--font-display); font-size: var(--step-2); letter-spacing: -0.02em; line-height: 1; }
+  .adv-text > span { color: var(--ink-soft); font-size: var(--step--1); line-height: 1.45; }
+  .adv-text code { font-size: 0.95em; color: var(--ink); }
+  .adv-foot { margin: 0; font-size: var(--step--1); color: var(--ink-soft); }
+
+  /* ---- The four little previews -------------------------------------------- */
+  .adv-art { display: grid; place-items: center; aspect-ratio: 4 / 3; border-radius: 13px; overflow: hidden; position: relative; }
+
+  .art-site { background: color-mix(in srgb, var(--mist) 70%, var(--surface)); }
+  .art-site svg { width: 100%; height: 100%; }
+  /* 1. The site: parallax. Nearer hills move further against the pointer; the sun drifts with it. */
+  .a-sun { fill: var(--lamp); transform-box: fill-box; transform-origin: center; }
+  .a-h1 { fill: var(--mist-deep); --d: 6; }
+  .a-h2 { fill: var(--pine); opacity: 0.55; --d: 13; }
+  .a-h3 { fill: var(--hill-front); opacity: 0.85; --d: 24; }
+  .art-site * { transition: transform 0.5s cubic-bezier(.2, .8, .2, 1); }
+  .art-site path { transform: translate(calc((0.5 - var(--px)) * var(--d) * 1px), calc((0.5 - var(--py)) * var(--d) * 0.4px)); }
+  .a-sun { transform: translate(calc((var(--px) - 0.5) * 22px), calc((var(--py) - 0.5) * 14px)); }
+  .adv-opt:hover .a-sun { transform: translate(calc((var(--px) - 0.5) * 22px), calc((var(--py) - 0.5) * 14px)) scale(1.35); }
+  .adv-opt:hover .art-site * { transition-duration: 0.25s; }
+
+  .art-card { background: #e9dfc8; }
+  /* 2. Punch card: the real card's 3D tilt, with foil glare under the pointer. */
+  .art-card { perspective: 600px; }
+  .a-card {
+    position: relative; overflow: hidden;
+    width: 78%; aspect-ratio: 1.586; border-radius: 9px; padding: 8%; display: grid; align-content: space-between;
+    background: linear-gradient(150deg, #123a2e, #0b271f); color: #f2e8d2;
+    box-shadow: 0 14px 24px -12px rgba(6, 22, 17, 0.6); transform: rotate(-6deg);
+    transition: transform 0.5s cubic-bezier(.2, .8, .2, 1);
+  }
+  .a-card::after {
+    content: ''; position: absolute; inset: 0; pointer-events: none; mix-blend-mode: color-dodge; opacity: 0;
+    background: radial-gradient(45% 60% at calc(var(--px) * 100%) calc(var(--py) * 100%), rgba(255, 226, 160, 0.85), transparent 70%);
+    transition: opacity 0.3s;
+  }
+  .adv-opt:hover .a-card {
+    transform: rotateX(calc((0.5 - var(--py)) * 26deg)) rotateY(calc((var(--px) - 0.5) * 32deg)) scale(1.06);
+    transition-duration: 0.15s;
+  }
+  .adv-opt:hover .a-card::after { opacity: 1; }
+  .a-brand { font: 700 clamp(0.5rem, 0.9vw, 0.7rem)/0.95 var(--font-display); text-transform: uppercase; letter-spacing: -0.01em; }
+  .a-slots { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 4%; padding: 5%; background: #f2e8d2; border-radius: 5px; }
+  .a-slots i { min-width: 0; box-sizing: border-box; aspect-ratio: 1; border-radius: 50%; border: 1px dashed rgba(18, 58, 46, 0.4); }
+  .a-slots i.on, .a-slots i.slam { border: 2.5px solid #c2321f; box-shadow: inset 0 0 0 2px #f2e8d2, inset 0 0 0 4px #c2321f; }
+  .a-slots i.slam { opacity: 0; }
+  .adv-opt:hover .a-slots i.slam { animation: a-slam 0.4s cubic-bezier(.3, 1.6, .5, 1) 0.15s both; }
+  @keyframes a-slam { from { transform: scale(2.4) rotate(-20deg); opacity: 0; } to { transform: none; opacity: 1; } }
+
+  .art-receipt { background: #39465a; align-items: start; }
+  .a-paper {
+    width: 56%; padding: 10% 9% 14%; display: grid; gap: 0.4rem; background: #fbf8f1; color: #2a2a2a;
+    font: 700 clamp(0.45rem, 0.8vw, 0.62rem) ui-monospace, 'SF Mono', Menlo, monospace; letter-spacing: 0.06em;
+    transform: translateY(-18%); transform-origin: 50% 0; transition: transform 0.9s cubic-bezier(.2, .8, .2, 1), rotate 0.6s;
+    mask: conic-gradient(from -45deg at bottom, #0000, #000 1deg 89deg, #0000 90deg) 50% / 9px 100%;
+  }
+  .a-paper i { display: block; height: 3px; width: var(--w); background: #c9c3b6; border-radius: 2px; }
+  .a-paper b { display: block; }
+  .a-total { display: flex !important; justify-content: space-between; border-top: 1px dashed #999; padding-top: 0.35rem; }
+  /* 3. Receipt: it prints out on hover, then hangs from the slot and swings with the pointer. */
+  .adv-opt:hover .a-paper { transform: translateY(6%); rotate: calc((0.5 - var(--px)) * 14deg); transition: transform 0.9s cubic-bezier(.2, .8, .2, 1), rotate 0.3s ease-out; }
+
+  /* 4. Terminal: a phosphor glow follows the pointer across the screen, with scanlines and
+     a slight colour split that leans the way the pointer moves. */
+  .art-term {
+    place-items: stretch;
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.035) 0 1px, transparent 1px 3px),
+      radial-gradient(circle at calc(var(--px) * 100%) calc(var(--py) * 100%), rgba(124, 194, 168, 0.32), transparent 0) no-repeat,
+      #0c1018;
+  }
+  .adv-opt:hover .art-term {
+    background:
+      repeating-linear-gradient(0deg, rgba(255, 255, 255, 0.05) 0 1px, transparent 1px 3px),
+      radial-gradient(circle at calc(var(--px) * 100%) calc(var(--py) * 100%), rgba(124, 194, 168, 0.32), transparent 55%),
+      #0c1018;
+  }
+  .adv-opt:hover .a-term {
+    text-shadow: calc((var(--px) - 0.5) * 4px) 0 rgba(255, 70, 90, 0.55), calc((0.5 - var(--px)) * 4px) 0 rgba(80, 200, 255, 0.55);
+  }
+  .a-term {
+    display: grid; align-content: start; gap: 0.35rem; padding: 12% 10%;
+    font: 500 clamp(0.55rem, 0.95vw, 0.78rem) ui-monospace, 'SF Mono', Menlo, monospace; color: #e6ecef;
+  }
+  .a-term em { font-style: normal; color: #7cc2a8; }
+  .a-dim { color: #8592a8; }
+  .a-type { display: inline-block; overflow: hidden; white-space: nowrap; vertical-align: bottom; width: 0; }
+  .adv-opt:hover .a-type, .adv-opt:focus-visible .a-type { animation: a-type 0.5s steps(4) 0.1s forwards; }
+  @keyframes a-type { to { width: 4ch; } }
+  .a-caret { display: inline-block; width: 0.55em; height: 1.05em; vertical-align: -0.15em; background: #7cc2a8; animation: a-blink 1s steps(1) infinite; }
+  @keyframes a-blink { 50% { opacity: 0; } }
+
+  /* Two by two on tablets; a list of rows on phones. */
+  @media (max-width: 60rem) {
+    .adv-list { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+    .adv-art { aspect-ratio: 16 / 9; }
+  }
+  @media (max-width: 34rem) {
+    .adv-list { grid-template-columns: 1fr; gap: 0.6rem; }
+    .adv-opt { grid-template-rows: none; grid-template-columns: 6.5rem 1fr; align-items: center; gap: 0.9rem; padding: 0.5rem 2.6rem 0.5rem 0.5rem; border-radius: 16px; }
+    .adv-art { aspect-ratio: 4 / 3; border-radius: 10px; }
+    .adv-key { top: 50%; right: 0.7rem; translate: 0 -50%; }
+    .adv-text { padding: 0; }
+    .adv-text strong { font-size: var(--step-1); }
+    .a-term { padding: 10% 8%; font-size: 0.42rem; gap: 0.2rem; }
+    .a-brand { font-size: 0.38rem; }
+    .a-paper { width: 72%; font-size: 0.36rem; gap: 0.2rem; }
+    .a-paper i { height: 2px; }
+  }
+
+  /* No keyboard hints on touch screens. */
+  @media (hover: none) { .adv-keys, .adv-key { display: none; } .adv-opt { padding-right: 0.9rem; } }
+
+  @media (prefers-reduced-motion: reduce) {
+    .adv-opt, .adv-opt *, :global(html.chosen) .adv { transition: none !important; animation: none !important; }
+    .a-slots i.slam { opacity: 1; }
+    .a-type { width: 4ch; }
+  }
+</style>

@@ -1,6 +1,7 @@
 ---
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
+import StampOnVisit from '../../components/rewards/StampOnVisit.astro';
 
 export async function getStaticPaths() {
   const work = await getCollection('work', ({ data }) => !data.draft);
@@ -34,6 +35,7 @@ const d = entry.data;
       <Content />
     </div>
   </article>
+  <StampOnVisit slug={entry.id} />
 </Base>
 
 <style>

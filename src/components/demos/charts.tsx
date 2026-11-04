@@ -15,6 +15,8 @@ const DEFAULT_W = 640;
 const H = 240;
 const PAD = { l: 56, r: 16, t: 14, b: 28 };
 
+const slotClass = (k: number) => `ch-s${k + 1}`;
+
 function niceMax(v: number) {
   if (v <= 0) return 1;
   const p = 10 ** Math.floor(Math.log10(v));
@@ -23,7 +25,7 @@ function niceMax(v: number) {
   return step * p;
 }
 
-function useWidth() {
+export function useWidth() {
   const ref = useRef<HTMLDivElement>(null);
   const [w, setW] = useState(DEFAULT_W);
   useEffect(() => {
@@ -95,7 +97,7 @@ function Tooltip({ W, x, y, title, series, i, fmt, total }: {
   W: number; x: number; y: number; title: string; series: Series[]; i: number; fmt: Fmt; total?: boolean;
 }) {
   return (
-    <div className="ch-tip" role="status" style={{ left: `${(x / W) * 100}%`, top: `${(y / H) * 100}%` }}>
+    <div className="ch-tip" role="status" style={{ left: `clamp(5.5rem, ${(x / W) * 100}%, calc(100% - 5.5rem))`, top: `${(y / H) * 100}%` }}>
       <strong>{title}</strong>
       {series.map((s, k) => (
         <span key={s.label}><span className={`ch-key ch-s${k + 1}`} aria-hidden="true" />{s.label}: {fmt(s.values[i])}</span>
@@ -219,8 +221,100 @@ export function StackedBars({ title, x, series, fmt, xHead, desc }: {
   );
 }
 
+/**
+ * Highs and lows over time, on a y axis that can go below zero. `ticks` holds short
+ * axis labels for `x`. Slots from `split` on are forecast (-1 when there are none).
+ */
+export function RangeChart({ title, x, ticks, high, low, split, fmt, xHead, desc }: {
+  title: string; x: string[]; ticks: string[]; high: Series; low: Series; split: number; fmt: Fmt; xHead: string; desc: string;
+}) {
+  const [wrap, W] = useWidth();
+  const series = [low, high];
+  const min = Math.floor(Math.min(...low.values) / 10) * 10;
+  const max = Math.ceil(Math.max(...high.values) / 10) * 10;
+  const step = (W - PAD.l - PAD.r) / Math.max(1, x.length - 1);
+  const px = (i: number) => PAD.l + i * step;
+  const py = (v: number) => PAD.t + (H - PAD.t - PAD.b) * (1 - (v - min) / (max - min || 1));
+  const { i, svgProps } = useSlot(W, x.length, (sx) => Math.round((sx - PAD.l) / step));
+  const line = (vals: number[], from: number, to: number) =>
+    vals.slice(from, to).map((v, j) => `${j ? 'L' : 'M'}${px(from + j)},${py(v)}`).join('');
+  const last = split < 0 ? x.length : Math.max(1, split);
+  const band = `${line(high.values, 0, x.length)}L${[...low.values].reverse().map((v, j) => `${px(x.length - 1 - j)},${py(v)}`).join('L')}Z`;
+  const every = Math.ceil(x.length / Math.max(2, Math.floor((W - PAD.l - PAD.r) / 72)));
+
+  return (
+    <figure className="ch">
+      <figcaption>{title}</figcaption>
+      <Legend series={series} />
+      <div className="ch-wrap" ref={wrap}>
+        <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label={`${desc} Use left and right arrow keys to read values.`} {...svgProps}>
+          {[0, 0.5, 1].map((f) => {
+            const v = min + (max - min) * f;
+            return (
+              <g key={f}>
+                <line x1={PAD.l} x2={W - PAD.r} y1={py(v)} y2={py(v)} className="ch-grid" />
+                <text x={PAD.l - 8} y={py(v)} dy="0.32em" textAnchor="end" className="ch-tick">{fmt(v)}</text>
+              </g>
+            );
+          })}
+          {ticks.map((label, k) => k % every === 0 && (
+            <text key={k} x={px(k)} y={H - 8} textAnchor="middle" className="ch-tick">{label}</text>
+          ))}
+          <path className="ch-band" d={band} />
+          {split > 0 && (
+            <g>
+              <line x1={px(split - 1)} x2={px(split - 1)} y1={PAD.t} y2={H - PAD.b} className="ch-base" />
+              <text x={px(split - 1) - 6} y={PAD.t + 8} textAnchor="end" className="ch-tick">Today</text>
+            </g>
+          )}
+          {series.map((s, k) => (
+            <g key={s.label}>
+              <path className={`ch-line ${slotClass(k)}`} d={line(s.values, 0, last)} />
+              {split > 0 && <path className={`ch-line ch-forecast ${slotClass(k)}`} d={line(s.values, split - 1, x.length)} />}
+            </g>
+          ))}
+          {i !== null && <line x1={px(i)} x2={px(i)} y1={PAD.t} y2={H - PAD.b} className="ch-cross" />}
+          {i !== null && series.map((s, k) => (
+            <circle key={s.label} cx={px(i)} cy={py(s.values[i])} r={4.5} className={`ch-dot ${slotClass(k)}`} />
+          ))}
+        </svg>
+        {i !== null && <Tooltip W={W} x={px(i)} y={py(high.values[i])} title={x[i]} series={series} i={i} fmt={fmt} />}
+      </div>
+      <TableView x={x} series={series} fmt={fmt} xHead={xHead} />
+    </figure>
+  );
+}
+
+type Share = { label: string; value: number; more?: { label: string; value: number }[] };
+const MORE_SHOWN = 40;
+
+/** A catch-all row, like "Other states", opens a list of what's in it on hover, focus or tap. */
+function ShareLabel({ row, fmt }: { row: Share; fmt: Fmt }) {
+  const [open, setOpen] = useState(false);
+  if (!row.more?.length) return <span className="ch-share-label">{row.label}</span>;
+  const hidden = row.more.length - MORE_SHOWN;
+  return (
+    <span className="ch-share-label" onPointerEnter={(e) => e.pointerType === 'mouse' && setOpen(true)} onPointerLeave={(e) => e.pointerType === 'mouse' && setOpen(false)}>
+      <button
+        type="button" className="ch-more" aria-expanded={open}
+        // A tap focuses then clicks, so a click can't toggle or it would close straight away.
+        onClick={() => setOpen(true)} onFocus={() => setOpen(true)} onBlur={() => setOpen(false)}
+        onKeyDown={(e) => e.key === 'Escape' && setOpen(false)}
+      >
+        {row.label} ({row.more.length})
+      </button>
+      {open && (
+        <span className="ch-tip ch-more-tip" role="status">
+          {row.more.slice(0, MORE_SHOWN).map((m) => <span key={m.label}><span>{m.label}</span><b>{fmt(m.value)}</b></span>)}
+          {hidden > 0 && <span>and {hidden} more</span>}
+        </span>
+      )}
+    </span>
+  );
+}
+
 /** Part-to-whole as labeled horizontal bars; values are shown, so no tooltip needed. */
-export function ShareBars({ title, rows, fmt }: { title: string; rows: { label: string; value: number }[]; fmt: Fmt }) {
+export function ShareBars({ title, rows, fmt }: { title: string; rows: Share[]; fmt: Fmt }) {
   const sum = rows.reduce((a, r) => a + r.value, 0);
   const max = Math.max(...rows.map((r) => r.value));
   return (
@@ -229,7 +323,7 @@ export function ShareBars({ title, rows, fmt }: { title: string; rows: { label: 
       <ul className="ch-share">
         {rows.map((r) => (
           <li key={r.label}>
-            <span className="ch-share-label">{r.label}</span>
+            <ShareLabel row={r} fmt={fmt} />
             <span className="ch-share-track"><span className="ch-share-fill ch-s1" style={{ width: `${(r.value / max) * 100}%` }} /></span>
             <span className="ch-share-val">{Math.round((r.value / sum) * 100)}% <small>{fmt(r.value)}</small></span>
           </li>

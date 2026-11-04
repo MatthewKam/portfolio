@@ -1,0 +1,106 @@
+---
+/**
+ * Rewards view: the portfolio as a loyalty program, because building loyalty
+ * programs is the job. Opening a case study stamps the visitor's card.
+ */
+import Base from '../layouts/Base.astro';
+import Rewards from '../components/rewards/Rewards.tsx';
+import { getCollection } from 'astro:content';
+import { roles } from '../data/career';
+
+const work = (await getCollection('work', ({ data }) => !data.draft))
+  .sort((a, b) => a.data.order - b.data.order)
+  .map((w) => ({ slug: w.id, title: w.data.title, company: w.data.company, years: w.data.years, summary: w.data.summary }));
+
+const months = (start: string, end: string | null) => {
+  const [y1, m1] = start.split('-').map(Number);
+  const [y2, m2] = (end ?? new Date().toISOString().slice(0, 7)).split('-').map(Number);
+  return (y2 - y1) * 12 + (m2 - m1) + 1;
+};
+const statement = roles
+  .filter((r) => r.kind === 'job')
+  .map((r) => ({ ...r, months: months(r.start, r.end) }));
+const total = statement.reduce((n, r) => n + r.months, 0);
+const fmt = (ym: string) => new Date(`${ym}-01T12:00:00`).toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+---
+<Base title="Rewards" description="The Matt Kam Rewards program: open the case studies, collect stamps, unlock the résumé.">
+  <div class="rp wrap">
+    <header class="rp-hero" data-x="rewards.astro › hero">
+      <p class="rp-kicker">Est. 2014 · Members welcome</p>
+      <h1>Matt Kam <span>Rewards</span></h1>
+    </header>
+
+    <Rewards client:load work={work}>
+      <p class="rp-lede">
+        I build loyalty programs for a living, so this portfolio is one. Open the work, collect stamps,
+        unlock the good stuff.
+      </p>
+    </Rewards>
+
+    <section class="rp-statement" id="experience" aria-labelledby="rp-statement-title">
+      <h2 id="rp-statement-title">Statement</h2>
+      <p class="rp-sub">Account activity, most recent first. Balance in months of frontend work.</p>
+      <table>
+        <thead>
+          <tr><th scope="col">Dates</th><th scope="col">Description</th><th scope="col" class="num">Months</th></tr>
+        </thead>
+        <tbody>
+          {statement.map((r) => (
+            <tr>
+              <td class="dates">{fmt(r.start)} – {r.end ? fmt(r.end) : 'now'}</td>
+              <td><strong>{r.company}</strong> · {r.title}<span>{r.summary}</span></td>
+              <td class="num">+{r.months}</td>
+            </tr>
+          ))}
+        </tbody>
+        <tfoot>
+          <tr><th scope="row" colspan="2">Balance</th><td class="num">{total} <span>≈ {Math.floor(total / 12)} years</span></td></tr>
+        </tfoot>
+      </table>
+    </section>
+
+    <footer class="rp-fine">
+      <p>
+        Terms: stamps have no cash value and live only in your browser. Nothing is sent anywhere, and there's
+        no tracking. Matt reserves the right to be delighted when you reach Gold.
+        Rather skip the game? <a href="/">Back home</a>.
+      </p>
+    </footer>
+  </div>
+</Base>
+
+<style>
+  .rp { padding-top: clamp(2rem, 6vw, 4rem); padding-bottom: 5rem; display: grid; gap: clamp(3rem, 8vw, 6rem); }
+  .rp-hero { margin-bottom: calc(-1 * clamp(1.5rem, 6vw, 4.5rem)); }
+  .rp-hero { display: grid; gap: 1rem; }
+  .rp-kicker {
+    margin: 0; font-family: var(--font-display); font-weight: 600; font-size: var(--step--1);
+    letter-spacing: 0.16em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  h1 {
+    margin: 0; font-size: clamp(3.4rem, 15vw, 11rem); line-height: 0.82; letter-spacing: -0.055em;
+    font-weight: 700; text-transform: uppercase;
+  }
+  h1 span { display: block; color: transparent; -webkit-text-stroke: 2px var(--ink); }
+  .rp-lede { font-family: var(--font-body); margin: 0.4rem 0 0; font-size: var(--step-1); max-width: 36ch; color: var(--ink-soft); }
+
+  .rp-statement h2 { font-size: var(--step-4); text-transform: uppercase; letter-spacing: -0.02em; margin-bottom: 0.3em; }
+  .rp-sub { color: var(--ink-soft); margin: 0 0 1.5rem; }
+  table { width: 100%; border-collapse: collapse; font-family: var(--font-display); }
+  th, td { text-align: left; padding: 1rem 0.75rem 1rem 0; vertical-align: top; border-bottom: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent); }
+  thead th { font-size: var(--step--1); letter-spacing: 0.12em; text-transform: uppercase; color: var(--ink-soft); font-weight: 600; border-bottom: 2px solid var(--ink); }
+  td span { display: block; color: var(--ink-soft); font-family: var(--font-body); font-size: var(--step--1); margin-top: 0.2rem; }
+  .dates { white-space: nowrap; color: var(--ink-soft); font-variant-numeric: tabular-nums; }
+  .num { text-align: right; padding-right: 0; font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-variant-numeric: tabular-nums; white-space: nowrap; }
+  tfoot th, tfoot td { border-bottom: 0; border-top: 2px solid var(--ink); font-size: var(--step-1); font-weight: 700; }
+  tfoot td span { display: inline; font-size: var(--step--1); font-weight: 400; }
+  @media (max-width: 40rem) {
+    thead { display: none; }
+    tr { display: grid; grid-template-columns: 1fr auto; border-bottom: 1px dashed color-mix(in srgb, var(--ink) 25%, transparent); padding: 0.8rem 0; }
+    tbody td, tbody th { border: 0; padding: 0.15rem 0; }
+    .dates { grid-column: 1 / -1; font-size: var(--step--1); }
+    tfoot tr { border-bottom: 0; border-top: 2px solid var(--ink); }
+    tfoot th, tfoot td { border: 0; padding: 0.8rem 0 0; }
+  }
+  .rp-fine p { max-width: 60ch; font-size: var(--step--1); color: var(--ink-soft); margin: 0; }
+</style>

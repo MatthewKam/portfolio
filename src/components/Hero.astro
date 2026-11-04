@@ -6,7 +6,7 @@
  * cursor leaves. Off for touch-only devices and reduced motion.
  */
 ---
-<section class="hero" aria-labelledby="hero-title" data-hero>
+<section class="hero" aria-labelledby="hero-title" data-hero data-x="Hero.astro">
   <div class="planes" aria-hidden="true" data-planes>
     <svg class="plane" style="--depth: 0.5" viewBox="0 0 1440 600" preserveAspectRatio="xMidYMax slice">
       <circle cx="1080" cy="170" r="70" fill="var(--lamp)" opacity="0.85" />
@@ -22,7 +22,7 @@
     </svg>
   </div>
   <div class="wrap copy">
-    <h1 id="hero-title">Matt Kam</h1>
+    <h1 id="hero-title"><span class="rise">Matt</span> <span class="rise">Kam</span></h1>
     <p class="lede">
       Frontend engineer with a design eye. Twelve years building interfaces people
       pay for, most recently rewards and loyalty at Recharge.
@@ -98,6 +98,13 @@
     will-change: transform;
   }
   .copy { position: relative; }
+  .rise { display: inline-block; animation: rise 0.9s cubic-bezier(.2, .7, .2, 1) both; }
+  .rise + .rise { animation-delay: 0.08s; }
+  .lede, .cta { animation: rise 0.9s 0.18s cubic-bezier(.2, .7, .2, 1) both; }
+  @keyframes rise { from { opacity: 0; transform: translateY(0.4em); filter: blur(6px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .rise, .lede, .cta { animation: none; }
+  }
   h1 { font-size: var(--step-5); font-weight: 700; letter-spacing: -0.03em; margin-bottom: 0.3em; }
   .lede { font-size: var(--step-1); max-width: 34ch; color: var(--ink-soft); margin: 0 0 2rem; }
   .cta {

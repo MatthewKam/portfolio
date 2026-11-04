@@ -1,20 +1,21 @@
 ---
 const path = Astro.url.pathname;
 // The alternate views each have their own copy of every section, so links stay inside the current view.
-const view = path.startsWith('/depth') ? 'depth' : 'classic';
-const home = view === 'classic' ? '/' : `/${view}`;
+const view = (['rewards', 'receipt'] as const).find((v) => path.startsWith(`/${v}`)) ?? 'home';
+const home = view === 'home' ? '/' : `/${view}`;
 const links = [
   { href: `${home}#experience`, label: 'Experience' },
   { href: `${home}#work`, label: 'Work' },
-  { href: view === 'classic' ? '/about' : `${home}#about`, label: 'About' },
+  { href: view === 'home' ? '/#about' : '/about', label: 'About' },
+  { href: '/live', label: 'Live' },
   { href: '#contact', label: 'Contact' },
 ];
-// The view button switches into the depth view, or back to classic when you're already there.
-const views = [{ id: 'depth', label: 'Depth view' }];
+// Each view button switches into that view, or back home when you're already there.
+const views = [{ id: 'rewards', label: 'Rewards view' }, { id: 'receipt', label: 'Receipt view' }];
 ---
-<header class="nav" data-nav>
+<header class="nav" data-nav data-x="Nav.astro">
   <nav class="wrap nav-inner" aria-label="Primary">
-    <a class="name" href={home} aria-current={path === home ? 'page' : undefined}>Matt Kam</a>
+    <a class="name" href="/" aria-current={path === '/' ? 'page' : undefined}>Matt Kam</a>
     <ul class="links">
       {links.map((l) => (
         <li><a href={l.href} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a></li>
@@ -25,14 +26,20 @@ const views = [{ id: 'depth', label: 'Depth view' }];
         <li>
           <a
             class="view-btn" href={view === v.id ? '/' : `/${v.id}`} aria-current={view === v.id ? 'page' : undefined}
-            aria-label={view === v.id ? `Leave ${v.label.toLowerCase()} (back to classic)` : `Switch to ${v.label.toLowerCase()}`}
-            title={view === v.id ? 'Back to classic view' : v.label}
+            aria-label={view === v.id ? `Leave ${v.label.toLowerCase()} (back home)` : `Switch to ${v.label.toLowerCase()}`}
+            title={view === v.id ? 'Back home' : v.label}
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
-              <circle cx="17" cy="7" r="2.6" />
-              <path d="M2 15c3-2.5 6-2 9-3.5S17 10 22 12v2H2z" opacity="0.55" />
-              <path d="M2 18c4-1.8 8-1 12-1.8S19 15.5 22 16.5V20H2z" />
-            </svg>
+            {v.id === 'receipt' ? (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 3h12v18l-2-1.4-2 1.4-2-1.4-2 1.4-2-1.4L6 21z" opacity="0.55" />
+                <path d="M8.5 7.5h7v1.5h-7zM8.5 11h7v1.5h-7zM8.5 14.5h4v1.5h-4z" />
+              </svg>
+            ) : (
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h15A1.5 1.5 0 0 1 21 6.5v11a1.5 1.5 0 0 1-1.5 1.5h-15A1.5 1.5 0 0 1 3 17.5z" opacity="0.55" />
+                <circle cx="8" cy="12" r="2" /><circle cx="12" cy="12" r="2" /><circle cx="16" cy="12" r="2" opacity="0.5" />
+              </svg>
+            )}
           </a>
         </li>
       ))}
@@ -88,16 +95,19 @@ const views = [{ id: 'depth', label: 'Depth view' }];
   }
   .term-btn {
     font-family: ui-monospace, 'SF Mono', Menlo, monospace; font-size: 0.85rem; font-weight: 700; line-height: 1;
-    background: var(--ink); color: var(--mist);
   }
-  .term-btn:hover { background: var(--pine); border-color: var(--pine); }
-  .view-btn { background: transparent; color: var(--ink); }
+  /* Outlined at rest, filled on hover; the current view stays filled. */
+  .term-btn, .view-btn { background: transparent; color: var(--ink); transition: background-color 0.15s, color 0.15s, border-color 0.15s; }
   .view-btn svg { width: 22px; height: 22px; fill: currentColor; }
-  .view-btn:hover { color: var(--pine); border-color: var(--pine); }
+  .term-btn:hover, .view-btn:hover { background: var(--pine); color: var(--mist); border-color: var(--pine); }
   .view-btn[aria-current='page'] { background: var(--ink); color: var(--mist); border-color: var(--ink); }
   @media (max-width: 34rem) {
     .nav-inner { grid-template-columns: 1fr auto; grid-template-areas: 'name tools' 'links links'; row-gap: 0.15rem; padding-block: 0.6rem 0.3rem; }
     .links { justify-content: space-between; }
     .name { font-size: var(--step-0); }
+  }
+  @media (max-width: 23rem) {
+    .links { gap: 0.5rem; }
+    ul a { font-size: var(--step--1); }
   }
 </style>
