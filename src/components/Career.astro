@@ -23,10 +23,16 @@ const months = (ym: string) => {
 };
 const pct = (n: number) => `${((n / span) * 100).toFixed(3)}%`;
 const endOf = (r: Role) => r.end ?? nowYM;
-const bar = (r: Role) => {
-  const s = months(r.start);
-  const e = months(endOf(r)) + 1; // end month is inclusive
+const between = (start: string, end: string) => {
+  const s = months(start);
+  const e = months(end) + 1; // end month is inclusive
   return `left:${pct(s)};width:${pct(e - s)}`;
+};
+const bar = (r: Role) => between(r.start, endOf(r));
+// A tool's bar within a role: its own dates if it was only used for part of it.
+const toolBar = (r: Role, tool: string) => {
+  const d = r.toolDates?.[tool];
+  return d ? between(d[0], d[1]) : bar(r);
 };
 
 const fmt = (ym: string) =>
@@ -37,6 +43,12 @@ const duration = (r: Role) => {
   const m = total % 12;
   return [y && `${y} yr`, m && `${m} mo`].filter(Boolean).join(' ');
 };
+
+// Short form for the row itself, e.g. "Feb 2022 – Aug 2026".
+const range = (r: Role) =>
+  r.start === endOf(r) ? fmt(r.start) : `${fmt(r.start)} – ${r.end ? fmt(r.end) : 'now'}`;
+// Bars too short to hold their duration leave it to the dates line.
+const roomy = (r: Role) => months(endOf(r)) - months(r.start) + 1 >= 30;
 
 const ordered = [...roles].sort((a, b) => months(b.start) - months(a.start));
 const nowPos = pct(months(nowYM) + 0.5);
@@ -71,10 +83,11 @@ const stack = stackRows.map((tool) => ({
           <span class="label">
             <span class="company">{r.company}</span>
             <span class="title">{r.title}</span>
+            <span class="dates">{range(r)}{r.kind !== 'education' && <> · {duration(r)}</>}</span>
           </span>
           <span class="track">
             <span class="bar" style={bar(r)}>
-              {r.kind === 'job' && <span class="bar-text">{duration(r)}</span>}
+              {r.kind === 'job' && roomy(r) && <span class="bar-text" aria-hidden="true">{duration(r)}</span>}
             </span>
           </span>
         </summary>
@@ -109,7 +122,7 @@ const stack = stackRows.map((tool) => ({
         <span class="label"><span class="company">{tool}</span></span>
         <span class="track">
           {uses.map((r) => (
-            <span class="bar" style={bar(r)} title={`${tool} at ${r.company}`}></span>
+            <span class="bar" style={toolBar(r, tool)} title={`${tool} at ${r.company}`}></span>
           ))}
         </span>
         <span class="visually-hidden">
@@ -146,14 +159,23 @@ const stack = stackRows.map((tool) => ({
   }
   @media (max-width: 44rem) {
     .chart { --label: 1fr; }
-    .row > summary, .row.axis, .row.tool { grid-template-columns: 1fr; row-gap: 0.4rem; }
-    .row.axis > span:first-child { display: none; }
-    .tick.odd { visibility: hidden; }
+    .row > summary { grid-template-columns: 1fr; }
+    /* Phones get the point, not the picture: roles as a list with dates; the skills below cover the stack. */
+    .chart :is(.row.axis, .track, .sub, .row.tool) { display: none; }
+    .career .skills { margin-top: 2.5rem; padding-top: 0; border-top: 0; }
+  }
+
+  /* The year axis follows the reader down the whole chart, just under the nav. */
+  .row.axis {
+    position: sticky; top: var(--nav-h, 4rem); z-index: 2;
+    padding-block: 0.5rem 0.35rem; margin-bottom: 0.25rem;
+    background: var(--mist);
+    border-bottom: 1px solid var(--mist-deep);
   }
 
   .track {
     position: relative; display: block; height: 1.75rem;
-    background-image: linear-gradient(to right, var(--mist-deep) 1px, transparent 1px);
+    background-image: linear-gradient(to right, color-mix(in srgb, var(--ink) 16%, transparent) 1px, transparent 1px);
     background-size: calc(100% / var(--years, 13)) 100%;
   }
   /* "now" line through every track */
@@ -196,6 +218,10 @@ const stack = stackRows.map((tool) => ({
   .role[open] .label::before { transform: rotate(45deg); }
   .company { font-family: var(--font-display); font-weight: 600; font-size: var(--step-1); line-height: 1.2; }
   .title { font-family: var(--font-display); font-size: var(--step--1); color: var(--ink-soft); }
+  .dates {
+    font-family: var(--font-display); font-size: var(--step--1); font-weight: 600; color: var(--ink);
+    font-variant-numeric: tabular-nums; margin-top: 0.15rem;
+  }
   summary:hover .company { color: var(--pine); }
   summary:hover .bar { background: var(--pine); }
   .freelance summary:hover .bar { background: var(--ink); }
@@ -222,7 +248,6 @@ const stack = stackRows.map((tool) => ({
   .tool .label { padding-left: 0; }
   .tool .track { height: 1.1rem; }
   .tool .bar { background: var(--pine); opacity: 0.85; top: 0.25rem; bottom: 0.25rem; }
-  @media (max-width: 44rem) { .row.tool { padding-block: 0.4rem; } }
 
   .skills {
     display: grid; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr));

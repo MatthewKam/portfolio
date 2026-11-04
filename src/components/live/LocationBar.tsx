@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { infer, locate, search, setPlace, usePlace, type Source } from './location';
 import './live.css';
 
@@ -10,6 +10,15 @@ const ORIGIN: Partial<Record<Source, string>> = {
 /** Infers a rough place with no prompt. The browser's own location prompt only appears after a click. */
 export default function LocationBar() {
   const place = usePlace();
+  // The privacy note is a dropdown on phones; on wider screens it's simply open, with no button.
+  const privacy = useRef<HTMLDetailsElement>(null);
+  useEffect(() => {
+    const wide = matchMedia('(min-width: 767px)');
+    const sync = () => { if (wide.matches && privacy.current) privacy.current.open = true; };
+    sync();
+    wide.addEventListener('change', sync);
+    return () => wide.removeEventListener('change', sync);
+  }, []);
   const [query, setQuery] = useState('');
   const [busy, setBusy] = useState(false);
   const [changing, setChanging] = useState(false);
@@ -74,11 +83,14 @@ export default function LocationBar() {
         {place && <button type="button" className="lv-btn" onClick={() => { setPlace(null); setChanging(false); setMessage(''); }}>Turn off</button>}
       </div>
       {message && <p className="lv-loc-msg" role="status">{message}</p>}
-      <p className="lv-loc-privacy">
-        Privacy: this demo only uses your location to show nearby data. It isn't stored on a server or used for tracking.
-        Coordinates go to Open-Meteo and the National Weather Service to fetch local data, and a place you choose is saved
-        only in this browser.
-      </p>
+      <details className="lv-loc-privacy" ref={privacy}>
+        <summary>Privacy</summary>
+        <p>
+          <strong className="lv-loc-privacy-label">Privacy: </strong>This demo only uses your location to show nearby data. It isn't stored on a server or used for tracking.
+          Coordinates go to Open-Meteo and the National Weather Service to fetch local data, and a place you choose is saved
+          only in this browser.
+        </p>
+      </details>
     </section>
   );
 }

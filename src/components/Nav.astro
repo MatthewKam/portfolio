@@ -66,6 +66,13 @@ const views = [{ id: 'rewards', label: 'Rewards view' }, { id: 'receipt', label:
   window.addEventListener('scroll', firm, { passive: true });
   firm();
 
+  // Sticky things below the nav (the career chart's year axis) sit at its height.
+  if (nav) {
+    const setH = () => document.documentElement.style.setProperty('--nav-h', `${nav.offsetHeight}px`);
+    new ResizeObserver(setH).observe(nav);
+    setH();
+  }
+
   // Phones: the section links live behind the menu button.
   const menuBtn = nav?.querySelector<HTMLButtonElement>('[data-menu-btn]');
   const setMenu = (open: boolean) => {

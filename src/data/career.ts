@@ -14,6 +14,8 @@ export interface Role {
   summary: string;
   highlights: string[];
   stack: string[];
+  /** Tools used for only part of the role, as [start, end]; others span the whole role. */
+  toolDates?: Record<string, [string, string]>;
   /** slugs in src/content/work */
   work?: string[];
 }
@@ -72,6 +74,7 @@ export const roles: Role[] = [
       'Built a reusable PHP component library that cut deployment time; integrated Google Analytics and Optimizely.',
     ],
     stack: ['React', 'AngularJS', 'Shopify', 'Liquid', 'PHP', 'Optimizely'],
+    toolDates: { AngularJS: ['2015-01', '2016-12'] },
     work: ['ad-exchange-dashboards'],
   },
   {
