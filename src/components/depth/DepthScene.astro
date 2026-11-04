@@ -155,4 +155,9 @@
     right: calc(15vw + 40px); top: calc(16vh + 40px);
     background: var(--lamp); opacity: 0.9; transform-origin: 50% 50%;
   }
+  /* Narrow screens: the hero text runs the full width, so the sun moves up into the
+     corner above the heading instead of sitting behind it. (+40px offsets the scene's inset.) */
+  @media (max-width: 766.98px) {
+    .sun { width: 72px; right: calc(var(--gutter) + 40px); top: calc(4.75rem + 40px); }
+  }
 </style>

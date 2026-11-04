@@ -8,10 +8,15 @@
 import { getCollection } from 'astro:content';
 import { roles, skills } from '../data/career';
 import { contactLinks } from '../data/contact';
+import { sideProject } from '../data/sideProject';
 
-const work = (await getCollection('work', ({ data }) => !data.draft))
-  .sort((a, b) => a.data.order - b.data.order)
-  .map((w) => ({ slug: w.id, title: w.data.title, company: w.data.company, years: w.data.years, summary: w.data.summary }));
+const work = [
+  ...(await getCollection('work', ({ data }) => !data.draft))
+    .sort((a, b) => a.data.order - b.data.order)
+    .map((w) => ({ slug: w.id, href: `/work/${w.id}`, title: w.data.title, company: w.data.company, years: w.data.years, summary: w.data.summary })),
+  // Listed last, after the case studies.
+  { slug: sideProject.slug, href: sideProject.href, title: sideProject.title, company: sideProject.company, years: sideProject.years, summary: sideProject.summary },
+];
 
 const data = {
   roles: [...roles]
@@ -41,7 +46,7 @@ const data = {
 
 <script>
   type Role = { id: string; company: string; title: string; start: string; end: string | null; kind: string; summary: string; highlights: string[]; stack: string[] };
-  type Work = { slug: string; title: string; company: string; years: string; summary: string };
+  type Work = { slug: string; href: string; title: string; company: string; years: string; summary: string };
   type Data = { roles: Role[]; skills: Record<string, string[]>; work: Work[]; contact: { label: string; href: string; external: boolean }[] };
   /** One printed line: plain text, or pieces that can be links or styled. */
   type Piece = string | { text: string; href?: string; cls?: string; external?: boolean };
@@ -172,7 +177,7 @@ const data = {
         },
       },
       work: {
-        help: 'case studies with live demos',
+        help: 'case studies with live demos, plus the side project',
         run: () => {
           data.work.forEach((w, i) => print([dim(`${i + 1}. `), pad(w.title, 34), dim(`${w.company}, ${w.years}`)]));
           print([dim('Open one: '), cmd('open 1'), dim(' or '), cmd(`open ${data.work[0]?.slug ?? ''}`)]);
@@ -197,7 +202,7 @@ const data = {
           print([dim('opened '), hi(w.title), dim('. Press >_ to come back here.')]);
           session.open = false;
           save();
-          location.href = `/work/${w.slug}`;
+          location.href = w.href;
         },
       },
       live: {

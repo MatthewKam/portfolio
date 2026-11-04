@@ -6,6 +6,7 @@
 import Base from '../layouts/Base.astro';
 import { getCollection } from 'astro:content';
 import { roles, skills } from '../data/career';
+import { sideProject } from '../data/sideProject';
 
 const work = (await getCollection('work', ({ data }) => !data.draft)).sort((a, b) => a.data.order - b.data.order);
 
@@ -75,6 +76,10 @@ const rects = bars.map((w, i) => { const r = { x, w, on: i % 2 === 0 }; x += w; 
             <a class="row" href={`/work/${w.id}`}><span>1 × {w.data.title.toUpperCase()}</span><span class="dots" /><span>DEMO →</span></a>
           </li>
         ))}
+        <li>
+          <a class="row" href={sideProject.href}><span>1 × {sideProject.title.toUpperCase()}</span><span class="dots" /><span>PEEK →</span></a>
+          <p class="mod">+ SIDE PROJECT, IN PROGRESS</p>
+        </li>
       </ul>
 
       <h2>ON THE HOUSE</h2>

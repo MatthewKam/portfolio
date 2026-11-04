@@ -15,8 +15,10 @@ const views = [{ id: 'rewards', label: 'Rewards view' }, { id: 'receipt', label:
 ---
 <header class="nav" data-nav data-x="Nav.astro">
   <nav class="wrap nav-inner" aria-label="Primary">
-    <a class="name" href="/" aria-current={path === '/' ? 'page' : undefined}>Matt Kam</a>
-    <ul class="links">
+    <a class="name" href="/" aria-label="Matt Kam, home" aria-current={path === '/' ? 'page' : undefined}>
+      <span aria-hidden="true">M<span class="rest">att&nbsp;</span>K<span class="rest">am</span></span>
+    </a>
+    <ul class="links" id="nav-links">
       {links.map((l) => (
         <li><a href={l.href} aria-current={path === l.href ? 'page' : undefined}>{l.label}</a></li>
       ))}
@@ -48,19 +50,40 @@ const views = [{ id: 'rewards', label: 'Rewards view' }, { id: 'receipt', label:
           <span aria-hidden="true">&gt;_</span>
         </button>
       </li>
+      <li class="menu-li">
+        <button type="button" class="menu-btn" data-menu-btn aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <span aria-hidden="true"></span>
+        </button>
+      </li>
     </ul>
   </nav>
 </header>
 
 <script>
-  // Quiet by default; firms up when the reader scrolls up (intent to navigate).
+  // Quiet at the top of the page; solid as soon as content can scroll under it.
   const nav = document.querySelector<HTMLElement>('[data-nav]');
-  let lastY = window.scrollY;
-  window.addEventListener('scroll', () => {
-    const y = window.scrollY;
-    nav?.classList.toggle('is-solid', y > 80 && y < lastY);
-    lastY = y;
-  }, { passive: true });
+  const firm = () => nav?.classList.toggle('is-solid', window.scrollY > 4);
+  window.addEventListener('scroll', firm, { passive: true });
+  firm();
+
+  // Phones: the section links live behind the menu button.
+  const menuBtn = nav?.querySelector<HTMLButtonElement>('[data-menu-btn]');
+  const setMenu = (open: boolean) => {
+    nav?.classList.toggle('menu-open', open);
+    menuBtn?.setAttribute('aria-expanded', String(open));
+    menuBtn?.setAttribute('aria-label', open ? 'Close menu' : 'Menu');
+  };
+  menuBtn?.addEventListener('click', () => setMenu(!nav?.classList.contains('menu-open')));
+  nav?.querySelector('#nav-links')?.addEventListener('click', (e) => {
+    if ((e.target as Element).closest('a')) setMenu(false);
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape' && nav?.classList.contains('menu-open')) { setMenu(false); menuBtn?.focus(); }
+  });
+  document.addEventListener('click', (e) => {
+    if (nav?.classList.contains('menu-open') && !nav.contains(e.target as Node)) setMenu(false);
+  });
+  matchMedia('(min-width: 767px)').addEventListener('change', (e) => { if (e.matches) setMenu(false); });
 </script>
 
 <style>
@@ -69,18 +92,36 @@ const views = [{ id: 'rewards', label: 'Rewards view' }, { id: 'receipt', label:
     opacity: 0.7;
     transition: opacity 200ms ease, background-color 200ms ease;
   }
-  .nav:hover, .nav:focus-within, .nav.is-solid {
+  .nav:hover, .nav:focus-within, .nav.is-solid, .nav.menu-open {
     opacity: 1;
-    background: color-mix(in srgb, var(--mist) 80%, transparent);
+    background: color-mix(in srgb, var(--mist) 94%, transparent);
     backdrop-filter: blur(10px);
     -webkit-backdrop-filter: blur(10px);
   }
-  /* One row on wide screens: name · links · tools. On phones the links drop to a second row. */
+  /* One row on wide screens: name · links · tools. On phones the links move into a menu. */
   .nav-inner {
     display: grid; grid-template-columns: auto 1fr auto; grid-template-areas: 'name links tools';
     align-items: center; column-gap: clamp(0.9rem, 3vw, 2rem); padding-block: 1rem;
   }
-  .name { grid-area: name; font-family: var(--font-display); font-weight: 700; font-size: var(--step-1); text-decoration: none; white-space: nowrap; }
+  /* A monogram the height of the buttons; on hover it spells out the name. The negative margin
+     keeps the letters on the page's left edge while the hover fill reaches past them. */
+  .name {
+    grid-area: name; justify-self: start; display: inline-flex; align-items: center; box-sizing: border-box;
+    height: 36px; padding: 0 0.6rem; margin-inline-start: -0.6rem; border-radius: 8px; color: var(--ink);
+    font-family: var(--font-display); font-weight: 700; font-size: 1.05rem; letter-spacing: -0.02em;
+    text-decoration: none; white-space: nowrap;
+    transition: background-color 0.15s, color 0.15s;
+  }
+  .name .rest {
+    display: inline-block; overflow: hidden; vertical-align: bottom; max-width: 0; opacity: 0;
+    transition: max-width 0.3s ease, opacity 0.2s ease;
+  }
+  @media (hover: hover) {
+    .name:hover { background: var(--pine); color: var(--mist); }
+    .name:hover .rest { max-width: 2.5em; opacity: 1; }
+  }
+  .name:focus-visible .rest { max-width: 2.5em; opacity: 1; }
+  @media (prefers-reduced-motion: reduce) { .name .rest { transition: none; } }
   ul { display: flex; align-items: center; gap: clamp(0.9rem, 3vw, 2rem); list-style: none; margin: 0; padding: 0; }
   .links { grid-area: links; justify-content: flex-end; }
   .tools { grid-area: tools; gap: 0.5rem; }
@@ -101,13 +142,40 @@ const views = [{ id: 'rewards', label: 'Rewards view' }, { id: 'receipt', label:
   .view-btn svg { width: 22px; height: 22px; fill: currentColor; }
   .term-btn:hover, .view-btn:hover { background: var(--pine); color: var(--mist); border-color: var(--pine); }
   .view-btn[aria-current='page'] { background: var(--ink); color: var(--mist); border-color: var(--ink); }
-  @media (max-width: 34rem) {
-    .nav-inner { grid-template-columns: 1fr auto; grid-template-areas: 'name tools' 'links links'; row-gap: 0.15rem; padding-block: 0.6rem 0.3rem; }
-    .links { justify-content: space-between; }
-    .name { font-size: var(--step-0); }
+  .tools .menu-li { display: none; }
+  .menu-btn { width: 44px; height: 36px; padding: 0; border-radius: 8px; border: 1px solid var(--ink); background: transparent; color: var(--ink); cursor: pointer; display: grid; place-items: center; }
+  /* Three bars that fold into an X. */
+  .menu-btn span, .menu-btn span::before, .menu-btn span::after {
+    display: block; width: 18px; height: 2px; border-radius: 2px; background: currentColor;
+    transition: transform 0.2s ease, background-color 0.2s ease;
   }
-  @media (max-width: 23rem) {
-    .links { gap: 0.5rem; }
-    ul a { font-size: var(--step--1); }
+  .menu-btn span { position: relative; }
+  .menu-btn span::before, .menu-btn span::after { content: ''; position: absolute; left: 0; }
+  .menu-btn span::before { transform: translateY(-6px); }
+  .menu-btn span::after { transform: translateY(6px); }
+  .menu-btn[aria-expanded='true'] span { background: transparent; }
+  .menu-btn[aria-expanded='true'] span::before { transform: rotate(45deg); }
+  .menu-btn[aria-expanded='true'] span::after { transform: rotate(-45deg); }
+  .menu-btn:hover, .menu-btn[aria-expanded='true'] { background: var(--ink); color: var(--mist); }
+  @media (max-width: 766.98px) {
+    .nav-inner { grid-template-columns: 1fr auto; grid-template-areas: 'name tools'; padding-block: 0.6rem; }
+    .tools .menu-li { display: flex; }
+    /* Drops down under the bar, full width. */
+    .links {
+      display: none; position: absolute; top: 100%; left: 0; right: 0;
+      flex-direction: column; align-items: stretch; gap: 0;
+      padding: 0.25rem var(--gutter) 1rem;
+      background: var(--mist);
+      border-bottom: 1px solid var(--mist-deep);
+      box-shadow: 0 12px 24px -16px rgb(0 0 0 / 0.35);
+    }
+    .nav.menu-open .links { display: flex; animation: menu-in 0.18s ease-out; }
+    .links li + li { border-top: 1px solid color-mix(in srgb, var(--mist-deep) 70%, transparent); }
+    .links a { display: block; padding: 0.85rem 0; font-size: var(--step-1); }
+  }
+  @keyframes menu-in { from { opacity: 0; transform: translateY(-6px); } }
+  @media (prefers-reduced-motion: reduce) {
+    .nav.menu-open .links { animation: none; }
+    .menu-btn span, .menu-btn span::before, .menu-btn span::after { transition: none; }
   }
 </style>

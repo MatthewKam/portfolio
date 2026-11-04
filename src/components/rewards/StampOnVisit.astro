@@ -3,10 +3,15 @@
  * On a case study page: if the visitor has joined the rewards program, this
  * stamps their card and says so. Visitors who haven't joined see nothing.
  */
+import { getCollection } from 'astro:content';
+import { sideProject } from '../../data/sideProject';
+
 interface Props { slug: string }
 const { slug } = Astro.props;
+// Opening every one of these turns the card black (see Rewards.tsx).
+const everything = [...(await getCollection('work', ({ data }) => !data.draft)).map((w) => w.id), sideProject.slug];
 ---
-<div class="sov" data-stamp={slug} role="status" hidden>
+<div class="sov" data-stamp={slug} data-all={everything.join(' ')} role="status" hidden>
   <span class="sov-mark" aria-hidden="true">★</span>
   <span data-sov-text></span>
   <a href="/rewards">See your card</a>
@@ -27,11 +32,16 @@ const { slug } = Astro.props;
         localStorage.setItem(KEY, JSON.stringify(m));
       }
       // Older cards may still hold the retired referral stamp; it doesn't count.
-      const count = m.stamps.filter((s: string) => s !== 'referral').length;
+      // The side project is worth two (BONUS in membership.ts).
+      const worth = (s: string) => (s === 'referral' ? 0 : s === 'household' ? 2 : 1);
+      const count = Math.min(5, m.stamps.reduce((n: number, s: string) => n + worth(s), 0));
       const full = count >= 5;
+      const earned = worth(slug) === 2 ? '2 stamps earned' : 'Stamp earned';
+      const all = box.dataset.all!.split(' ');
+      const black = all.every((s) => m.stamps.includes(s));
       box.querySelector('[data-sov-text]')!.textContent = isNew
-        ? (full ? 'Card complete!' : `Stamp earned. ${count} of 5.`)
-        : `Already stamped. ${count} of 5.`;
+        ? (black ? `All ${all.length}! Black card unlocked.` : full ? 'Card complete!' : `${earned}. ${count} of 5.`)
+        : black ? 'Already stamped. Black card member.' : `Already stamped. ${count} of 5.`;
       if (isNew && full) box.querySelector('a')!.textContent = 'Claim your reward';
       box.hidden = false;
     }
@@ -50,6 +60,8 @@ const { slug } = Astro.props;
     animation: sov-in 0.5s cubic-bezier(.3, 1.4, .5, 1) 0.4s both;
   }
   .sov[hidden] { display: none; }
+  /* Narrow screens: sit above the X-ray toggle in the bottom-left corner instead of over it. */
+  @media (max-width: 34rem) { .sov { bottom: calc(max(1rem, env(safe-area-inset-bottom)) + 3.4rem); } }
   .sov-mark {
     width: 1.8rem; height: 1.8rem; border-radius: 50%; display: grid; place-items: center;
     background: #f2e8d2; color: #c2321f; font-size: 1rem;

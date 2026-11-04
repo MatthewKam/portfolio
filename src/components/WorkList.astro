@@ -1,6 +1,7 @@
 ---
 /** "Selected work" list, shared by the home page. */
 import { getCollection } from 'astro:content';
+import { sideProject } from '../data/sideProject';
 
 const work = (await getCollection('work', ({ data }) => !data.draft))
   .sort((a, b) => a.data.order - b.data.order);
@@ -17,6 +18,13 @@ const work = (await getCollection('work', ({ data }) => !data.draft))
         </a>
       </li>
     ))}
+    <li>
+      <a href={sideProject.href}>
+        <span class="meta">{sideProject.company}, {sideProject.years}</span>
+        <span class="title">{sideProject.title}<span class="go" aria-hidden="true">→</span></span>
+        <span class="summary">{sideProject.summary}</span>
+      </a>
+    </li>
   </ul>
 </section>
 

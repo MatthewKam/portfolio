@@ -12,6 +12,13 @@ export const MILESTONES = [
   { at: 5, tier: 'Gold', reward: 'Card complete. Contact unlocked' },
 ] as const;
 
+// The side project (pages/household.astro) is worth two stamps.
+export const BONUS = { slug: 'household', worth: 2 } as const;
+const worth = (slug: string) => (slug === BONUS.slug ? BONUS.worth : 1);
+/** Stamps on the card, in the order earned, with the bonus taking two slots. */
+export const slotsOf = (stamps: string[]) => stamps.flatMap((s, i) => Array.from({ length: worth(s) }, () => ({ slug: s, from: i })));
+export const pointsOf = (stamps: string[]) => stamps.reduce((n, s) => n + worth(s), 0);
+
 export type Membership = {
   number: string; // Shown on the card, e.g. "0427 1180".
   joined: string; // ISO date.

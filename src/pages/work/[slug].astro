@@ -2,6 +2,7 @@
 import Base from '../../layouts/Base.astro';
 import { getCollection, render } from 'astro:content';
 import StampOnVisit from '../../components/rewards/StampOnVisit.astro';
+import BackLink from '../../components/BackLink.astro';
 
 export async function getStaticPaths() {
   const work = await getCollection('work', ({ data }) => !data.draft);
@@ -15,7 +16,7 @@ const d = entry.data;
 <Base title={d.title} description={d.summary}>
   <article class="wrap case">
     <header>
-      <a class="back" href="/#work">&lt; All work</a>
+      <BackLink />
       <h1>{d.title}</h1>
       <p class="summary">{d.summary}</p>
       <dl class="facts">
@@ -40,7 +41,6 @@ const d = entry.data;
 
 <style>
   .case { padding-top: 3rem; }
-  .back { font-family: var(--font-display); font-size: var(--step--1); color: var(--ink-soft); }
   h1 { font-size: var(--step-5); margin-top: 1.5rem; letter-spacing: -0.03em; }
   .summary { font-size: var(--step-1); max-width: 40ch; color: var(--ink-soft); }
   .facts {

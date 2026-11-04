@@ -1,0 +1,181 @@
+---
+/**
+ * The side project: a snapshot of what's built so far, as looping clips with
+ * notes, rather than a hands-on demo like the case studies. Worth two stamps on
+ * the rewards card (BONUS in components/rewards/membership.ts).
+ */
+import Base from '../layouts/Base.astro';
+import StampOnVisit from '../components/rewards/StampOnVisit.astro';
+import BackLink from '../components/BackLink.astro';
+
+const REPO = 'https://github.com/MatthewKam/house-calendar';
+const features = [
+  {
+    id: 'calendar', title: 'Calendar',
+    text: [
+      'Week, day and month views, with a color per person and a filter to see just one of them.',
+      'Adding an event suggests addresses as you type and works out the drive time. iCloud calendars sync both ways; Google connects per person.',
+    ],
+  },
+  {
+    id: 'tasks', title: 'Tasks',
+    text: [
+      'Daily tasks, chores and bonus tasks for each kid. Bonus tasks earn stars, and finishing the day gets a Hooray.',
+      'Each kid has a history, and parents can add, edit and reorder tasks, including one-time ones.',
+    ],
+  },
+  {
+    id: 'rewards', title: 'Rewards',
+    text: [
+      'Kids put their stars into reward jars. A full jar is earned, then redeemed, and parents can edit jars or make new ones.',
+      'The same loop as my day job, scaled down for kids: earn, save up, redeem.',
+    ],
+  },
+  {
+    id: 'photos', title: 'Photos',
+    text: [
+      'The family album. Browse photos, pick the ones the screen saver shows, and flip through them on the calendar.',
+      'Uploads come straight from a phone, videos included.',
+    ],
+  },
+];
+const shots = [
+  { src: '/household/calendar-week.jpg', alt: 'Week view with events for each person, a photo, the weather, and the joke and quote of the day', caption: 'Week view' },
+  { src: '/household/screen-saver.jpg', alt: 'Screen saver: a mountain photo with the time, weather and the rest of today’s events', caption: 'Screen saver' },
+  { src: '/household/lists.jpg', alt: 'Shared lists synced from Apple Reminders', caption: 'Shared lists' },
+];
+---
+<Base title="Household (working title)" description="Matt Kam's side project: a family calendar for the wall and everyone's phone, with kids' tasks, reward jars and a photo album.">
+  <article class="wrap case hh">
+    <header>
+      <BackLink />
+      <p class="kicker">Side project · in progress</p>
+      <h1>Household <span>(working title)</span></h1>
+      <p class="summary">A family calendar for the wall and everyone's phone, with kids' tasks, reward jars and a photo album.</p>
+      <dl class="facts">
+        <div><dt>Role</dt><dd>Everything: design, frontend, backend</dd></div>
+        <div><dt>When</dt><dd>Since Oct 2026</dd></div>
+        <div><dt>Runs on</dt><dd>A wall tablet, plus everyone's phone</dd></div>
+        <div><dt>Stack</dt><dd>React, TypeScript, Fastify, SQLite, Fly.io</dd></div>
+      </dl>
+      <p class="note">A look at what's built so far. The people, events and photos in these clips are made up.</p>
+    </header>
+
+    <ol class="features">
+      {features.map((f, i) => (
+        <li class="feature" aria-labelledby={`hh-${f.id}`}>
+          <div class="device">
+            <video
+              data-clip={`/household/${f.id}.mp4`} muted loop playsinline preload="none"
+              poster={`/household/${f.id}.jpg`} width="1024" height="768" aria-label={`${f.title} walkthrough`}
+            ></video>
+          </div>
+          <div class="feature-text">
+            <p class="feature-n">{String(i + 1).padStart(2, '0')}</p>
+            <h2 id={`hh-${f.id}`}>{f.title}</h2>
+            {f.text.map((t) => <p>{t}</p>)}
+          </div>
+        </li>
+      ))}
+    </ol>
+
+    <div class="prose">
+      <h2>What it's for</h2>
+      <p>
+        The app that helps a family look after each other. It's built first for parents with little kids:
+        one calendar for both parents, everyone's color at a glance, and kids' goals and stars on a screen the
+        whole house can see. Everyone has it on their phone, too.
+      </p>
+
+      <h2>How it's built</h2>
+      <ul>
+        <li>One small Node server (Fastify) serves the React app and an API. Each household gets its own SQLite file, backed up continuously with Litestream.</li>
+        <li>iCloud calendars and Apple Reminders lists sync two ways over CalDAV; Google Calendar connects per person.</li>
+        <li>Sign in with Apple, Google or a code sent by email; no passwords. Guardians, kids and the wall display each get the right access, and the wall unlocks with a parent's PIN.</li>
+        <li>Built for a touch screen first: big targets, a night mode, and a screen saver that shows photos, the time and what's next.</li>
+      </ul>
+    </div>
+
+    <section class="shots" aria-labelledby="hh-shots-title">
+      <h2 id="hh-shots-title">More screens</h2>
+      <ul>
+        {shots.map((s) => (
+          <li><figure><img src={s.src} alt={s.alt} width="1200" height="899" loading="lazy" decoding="async" /><figcaption>{s.caption}</figcaption></figure></li>
+        ))}
+      </ul>
+    </section>
+
+    <p class="hh-links"><a class="cta" href={REPO} target="_blank" rel="noopener noreferrer">See the code on GitHub</a></p>
+  </article>
+  <StampOnVisit slug="household" />
+</Base>
+
+<script>
+  // Clips play like GIFs, but only while on screen, and only download once they get close.
+  // With reduced motion they wait for a press of play.
+  const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
+  const io = new IntersectionObserver((entries) => {
+    for (const { target, isIntersecting } of entries) {
+      const v = target as HTMLVideoElement;
+      if (!isIntersecting) { v.pause(); continue; }
+      if (!v.src) v.src = v.dataset.clip!;
+      if (still) v.controls = true;
+      else v.play().catch(() => { v.controls = true; });
+    }
+  }, { rootMargin: '150px 0px' });
+  document.querySelectorAll<HTMLVideoElement>('[data-clip]').forEach((v) => io.observe(v));
+</script>
+
+<style>
+  .case { padding-top: 3rem; padding-bottom: 2rem; }
+  .kicker {
+    margin: 1.5rem 0 0; font-family: var(--font-display); font-weight: 600; font-size: var(--step--1);
+    letter-spacing: 0.14em; text-transform: uppercase; color: var(--ink-soft);
+  }
+  h1 { font-size: var(--step-5); margin-top: 0.5rem; letter-spacing: -0.03em; }
+  h1 span { font-size: 0.4em; font-weight: 500; letter-spacing: 0; color: var(--ink-soft); white-space: nowrap; }
+  .summary { font-size: var(--step-1); max-width: 40ch; color: var(--ink-soft); }
+  .facts {
+    display: grid; grid-template-columns: repeat(auto-fit, minmax(11rem, 1fr));
+    gap: 1.25rem 2rem; margin: 2.5rem 0; padding: 1.5rem 0;
+    border-block: 1px solid var(--mist-deep);
+  }
+  dt { font-family: var(--font-display); font-size: var(--step--1); color: var(--ink-soft); }
+  dd { margin: 0.2rem 0 0; font-family: var(--font-display); font-weight: 500; }
+  .note {
+    max-width: var(--measure); font-size: var(--step--1); color: var(--ink-soft);
+    border-left: 3px solid var(--lamp); padding-left: 1rem; margin-bottom: 4rem;
+  }
+
+  /* Clip and notes side by side, alternating sides; stacked on narrow screens. */
+  .features { list-style: none; margin: 0 0 5rem; padding: 0; display: grid; gap: clamp(3.5rem, 8vw, 6rem); }
+  .feature { display: grid; gap: 1.5rem; align-items: center; }
+  @media (min-width: 52rem) {
+    .feature { grid-template-columns: 1.45fr 1fr; gap: clamp(2rem, 4vw, 3.5rem); }
+    .feature:nth-child(even) .device { order: 2; }
+  }
+  .feature-n { margin: 0; font: 600 var(--step--1) ui-monospace, 'SF Mono', Menlo, monospace; color: var(--ink-soft); }
+  .feature-text h2 { font-size: var(--step-3); margin: 0.2rem 0 0.8rem; letter-spacing: -0.02em; }
+  .feature-text p:not(.feature-n) { max-width: 42ch; color: var(--ink-soft); margin: 0 0 0.8rem; }
+
+  /* A tablet bezel, since the app lives on one. */
+  .device {
+    padding: clamp(0.5rem, 1.6vw, 0.9rem); border-radius: clamp(16px, 2.6vw, 26px);
+    background: #1a1d22; box-shadow: 0 1px 0 rgba(255, 255, 255, 0.06) inset, 0 30px 60px -30px rgba(0, 0, 0, 0.55);
+  }
+  .device video { display: block; width: 100%; height: auto; aspect-ratio: 4 / 3; border-radius: clamp(5px, 0.9vw, 9px); background: #f4f2ee; }
+
+  .shots { margin-top: 3.5rem; }
+  .shots h2 { font-size: var(--step-2); margin-bottom: 1.25rem; }
+  .shots ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 1.5rem; grid-template-columns: repeat(auto-fit, minmax(16rem, 1fr)); }
+  .shots figure { margin: 0; }
+  .shots img { display: block; width: 100%; height: auto; border-radius: 10px; border: 1px solid var(--mist-deep); }
+  figcaption { font-family: var(--font-display); font-size: var(--step--1); color: var(--ink-soft); margin-top: 0.5rem; }
+
+  .hh-links { margin: 3rem 0 0; }
+  .cta {
+    display: inline-block; font-family: var(--font-display); font-weight: 600;
+    background: var(--ink); color: var(--mist); padding: 0.8rem 1.4rem; border-radius: 999px; text-decoration: none;
+  }
+  .cta:hover { color: var(--mist); background: var(--pine); }
+</style>
